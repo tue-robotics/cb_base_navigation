@@ -9,10 +9,10 @@
     <node pkg="cb_base_navigation" type="cb_base_navigation_global_planner_interface" name="global_planner_interface" ns="cb_base_navigation" output="screen" launch-prefix="$(arg launch-prefix)">
 
         <!-- Global Planner Settings -->        
-        <rosparam file="$(find cb_base_navigation)/params/global_planner_params.yaml" command="load" />
+        <rosparam file="$(find cb_base_navigation)/params/global_planner.yaml" command="load" />
 
         <!-- Global Costmap Settings -->
-        <rosparam file="$(find cb_base_navigation)/params/global_costmap_params.yaml" command="load" ns="global_costmap" />
+        <rosparam file="$(find cb_base_navigation)/params/global_costmap.yaml" command="load" ns="global_costmap" />
 
     </node>
 

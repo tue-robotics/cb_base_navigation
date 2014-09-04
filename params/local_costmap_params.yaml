@@ -1,0 +1,85 @@
+# SETUP
+
+global_frame: /map
+robot_base_frame: /amigo/base_link
+rolling_window: true
+track_unknown_space: true
+resolution: 0.05
+width: 8
+height: 8
+robot_radius: 0.35
+
+update_frequency: 0.0
+publish_frequency: 0.0
+
+always_send_full_costmap: true
+
+# LAYER SETUP
+
+plugins: 
+    # Obstacles
+    - {name: ed_occupancy_grid,                 type: "costmap_2d::StaticLayer"}
+    - {name: recent_obstacles,                  type: "costmap_2d::ObstacleLayer"}
+
+    # Obstacle inflation
+    - {name: obstacle_inflation,                type: "costmap_2d::InflationLayer"}
+
+    # Free space
+    - {name: unknown_free_space,                type: "costmap_2d::ObstacleLayer"}
+
+    # Free space inflation
+    - {name: free_space_inflation,              type: "costmap_2d::InflationLayer"}
+
+    # Clear the robot footprint
+    - {name: robot_footprint,                   type: "costmap_2d::FootprintLayer"}
+
+    # Go to the configuration space
+    - {name: configuration_space,               type: "costmap_2d::InflationLayerFull"}
+
+# LAYER CONFIGURATION
+
+# Ed World model layer
+ed_occupancy_grid:
+    map_topic: /ed_map
+    track_unknown_space: true
+
+recent_obstacles:
+    occupied_to_default_time: 2.0
+    observation_sources: base_laser torso_laser #top_kinect
+    base_laser:  {data_type: LaserScan, sensor_frame: /amigo/base_laser, topic: /amigo/base_front_laser, observation_persistence: 0.0, inf_is_valid: true, obstacle_range: 20.0, marking: true, clearing: false, ray_trace_range: 20.0}
+    torso_laser:  {data_type: LaserScan, sensor_frame: /amigo/torso_laser, topic: /amigo/torso_laser, observation_persistence: 0.0, inf_is_valid: true, obstacle_range: 20.0, marking: true, clearing: false, ray_trace_range: 20.0}
+    top_kinect: {data_type: PointCloud2, 
+                 sensor_frame: /amigo/top_kinect/openni_depth_optical_frame, 
+                 topic: /amigo/top_kinect/rgb/points,
+                 observation_persistence: 0.0,
+                 expected_update_rate: 1.0,
+                 min_obstacle_height: 0.05,
+                 max_obstacle_height: 2,
+                 obstacle_range: 5.0}
+
+# Obstacle inflation
+obstacle_inflation:
+    use_footprint: false
+    target_cell_value: 254
+    dilation_cell_value: 253
+    dilation_radius: 0.06 # Wall margin
+    inflation_radius: 0.3 # Optimization
+
+# Free Space modeling
+unknown_free_space:
+    track_unknown_space: true
+    free_to_default_time: 30.0
+    observation_sources: base_laser
+    base_laser:  {data_type: LaserScan, sensor_frame: /amigo/base_laser, topic: /amigo/base_front_laser, observation_persistence: 0.0, inf_is_valid: true, ostacle_range: 20.0, marking: false, clearing: true, ray_trace_range: 20.0}
+
+# Free space inflation
+free_space_inflation:
+    use_footprint: false
+    target_cell_value: 255
+    dilation_cell_value: 100
+    dilation_radius: 0.7
+    inflation_radius: 0.7
+
+# Workspace to configuration space 
+configuration_space:
+    dilation_radius: 0.35 # Should be the robot inscribed radius

@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <arg name="gdb" default="false"/>
+    <arg if="$(arg gdb)" name="launch-prefix" value="gdb -ex run --args"/>
+    <arg unless="$(arg gdb)" name="launch-prefix" value=""/>
+
+    <node pkg="cb_base_navigation" type="cb_base_navigation_local_planner_interface" name="local_planner_interface" ns="cb_base_navigation" output="screen" launch-prefix="$(arg launch-prefix)">
+
+        <!-- Local Planner Settings -->        
+        <rosparam file="$(find cb_base_navigation)/params/local_planner_params.yaml" command="load" />
+
+        <!-- Local Costmap Settings -->
+        <rosparam file="$(find cb_base_navigation)/params/local_costmap_params.yaml" command="load" ns="local_costmap" />
+
+        <remap from="odom" to="/amigo/base/measurements" />
+
+    </node>
+
+</launch>

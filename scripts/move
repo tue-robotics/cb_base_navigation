@@ -1,0 +1,55 @@
+#!/usr/bin/python
+
+import rospy
+import roslib
+import tf
+import sys
+import actionlib
+
+roslib.load_manifest('cb_base_navigation')
+
+from math import cos, sin
+from geometry_msgs.msg import *
+from cb_planner_msgs_srvs.srv import *
+from cb_planner_msgs_srvs.msg import *
+
+if len(sys.argv) < 3:
+    sys.exit('Usage: ./move \'frame\' \'constraint\'')
+
+frame = sys.argv[1]
+constraint = sys.argv[2]
+
+rospy.init_node('move')
+
+plan_pub = rospy.Publisher('/base_navigation/action_server/goal', LocalPlannerActionGoal)
+get_plan_client = rospy.ServiceProxy("/base_navigation/get_plan_srv", GetPlan)
+
+pcs = []
+pc = PositionConstraint()
+pc.constraint = constraint
+pc.frame = frame
+pcs.append(pc)
+
+try:
+    resp = get_plan_client(pcs)
+except:
+    print("Could not get plan from global planner via service call, is the global planner running?")
+    sys.exit()
+
+if (len(resp.plan) == 0):
+    print("Global planner could not find a valid plan. I'm bailing out.")
+    sys.exit()
+
+# Push the plan to the local planner
+oc = OrientationConstraint()
+oc.frame = frame
+
+goal = LocalPlannerActionGoal()
+goal.goal.plan = resp.plan
+goal.goal.orientation_constraint = oc
+
+rospy.sleep(1) # Wait a second for the publisher initialization
+plan_pub.publish(goal)
+
+print "Plan and orientation constraint published to local planner :)"
+

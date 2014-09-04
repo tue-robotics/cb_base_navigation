@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<package>
+  <name>cb_base_navigation</name>
+  <version>0.0.0</version>
+  <description>Base Navigation which works with the Costmap 2D ROS world model. It can generate plans based on a set of goal position constraints. Furthermore it can check if a plan is still valid. This global planner does not take the robot's configuration into account. This package also provides the local planner and an interface to communicate with the local planner.</description>
+
+  <maintainer email="reinzor@gmail.com">Rein Appeldoorn</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>cb_planner_msgs_srvs</build_depend>
+  <build_depend>costmap_2d</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>nav_core</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>visualization_msgs</build_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>actionlib_msgs</build_depend>
+  <build_depend>pcl_conversions</build_depend>
+  <build_depend>head_ref</build_depend>
+
+  <run_depend>cb_planner_msgs_srvs</run_depend>
+  <run_depend>costmap_2d</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>nav_core</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>visualization_msgs</run_depend>
+  <run_depend>actionlib</run_depend>
+  <run_depend>actionlib_msgs</run_depend>
+  <run_depend>pcl_conversions</run_depend>
+  <run_depend>head_ref</run_depend>
+
+  <export>
+    <cb_base_navigation plugin="${prefix}/global_planner_plugins.xml"/>
+    <nav_core           plugin="${prefix}/local_planner_plugins.xml" />
+  </export>
+</package>

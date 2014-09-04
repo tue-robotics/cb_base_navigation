@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <include file="$(find cb_base_navigation)/launch/local_planner.launch" />
+    <include file="$(find cb_base_navigation)/launch/global_planner.launch" />
+
+</launch>

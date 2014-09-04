@@ -1,7 +1,7 @@
 #local_planner  : cb_local_planner/AmigoLocalPlanner
 #local_planner  : base_local_planner/TrajectoryPlannerROS
-local_planner : tue_dwa_planner/DWAPlannerROS
-#local_planner : dwa_local_planner/DWAPlannerROS
+#local_planner : tue_dwa_planner/DWAPlannerROS
+local_planner : dwa_local_planner/DWAPlannerROS
 
 # Specific local planner parameters
 AmigoLocalPlanner:

@@ -62,9 +62,9 @@ void LocalPlannerInterface::topicGoalCallback(const LocalPlannerActionGoalConstP
     ROS_INFO("Incoming topic plan.");
 
     goal_ = goal->goal;
-    goal_.plan.back().pose.orientation.w = 1.0; // for normalization
 
     if (isGoalSet()) {
+        updateEndGoalOrientation();
         local_planner_->setPlan(goal_.plan);
     } else {
         ROS_ERROR("Received a plan of length 0, is something wrong?");
@@ -76,9 +76,9 @@ void LocalPlannerInterface::actionServerSetPlan()
     ROS_INFO("Incoming actionlib plan.");
 
     goal_ = *action_server_->acceptNewGoal();
-    goal_.plan.back().pose.orientation.w = 1.0; // for normalization
 
     if (isGoalSet()) {
+        updateEndGoalOrientation();
         local_planner_->setPlan(goal_.plan);
     } else {
         ROS_ERROR("Received a plan of length 0, is something wrong?");
@@ -95,8 +95,9 @@ void LocalPlannerInterface::doSomeMotionPlanning()
 {
     if (!isGoalSet()) return;
 
-    // 1) Update the end goal orientation due to the orientation constraint
-    bool valid = updateEndGoalOrientation();
+    // 1) Update the end goal orientation due to the orientation constraint, if updated, set new plan
+    if (updateEndGoalOrientation())
+        local_planner_->setPlan(goal_.plan);
 
     // 2) Check if we are already there
     if (local_planner_->isGoalReached()) {
@@ -111,13 +112,11 @@ void LocalPlannerInterface::doSomeMotionPlanning()
 
     // 4) If we're not there and we're not stuck: compute and publish velocity commands to base
     geometry_msgs::Twist tw;
-
     local_planner_->computeVelocityCommands(tw);
     vel_pub_.publish(tw);
 
     // 5) Publish some feedback to via the action_server
     feedback_.dtg = 0.0; //! TODO: NY implemented
-    feedback_.frame_exists = valid;
     action_server_->publishFeedback(feedback_);
 
     // 6) Look in the heading direction
@@ -132,9 +131,10 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
     tf::StampedTransform constraint_to_world_tf;
     try {
         tf_->lookupTransform(costmap_.getGlobalFrameID(), goal_.orientation_constraint.frame, ros::Time(0), constraint_to_world_tf);
+        feedback_.frame_exists = true;
     } catch(tf::TransformException& ex) {
         ROS_ERROR("Failed to get robot orientation constraint frame");
-        //action_server_->setAborted();
+        feedback_.frame_exists = false;
         return false;
     }
 
@@ -147,24 +147,32 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
     tf::Point diff = constraint_to_world_tf*look_at - end_point;
 
     // Calculate current and new orientation
-    tf::Quaternion new_quat, current_quat;
-    tf::quaternionMsgToTF(goal_.plan.back().pose.orientation, current_quat);
-    new_quat = tf::createQuaternionFromYaw(atan2(diff.y(),diff.x()) + goal_.orientation_constraint.angle_offset);
+    geometry_msgs::Quaternion& q = goal_.plan.back().pose.orientation;
+    tf::Quaternion new_quat = tf::createQuaternionFromYaw(atan2(diff.y(),diff.x()) + goal_.orientation_constraint.angle_offset);
+
+    // Check if the end goal orientation is already set
+    bool changed = (q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0);
+
+    if (!changed)
+    {
+        tf::Quaternion current_quat;
+        tf::quaternionMsgToTF(goal_.plan.back().pose.orientation, current_quat);
+        changed = abs(current_quat.dot(new_quat) < 1-1e-6);
+    }
 
     // Check if the orientation has changed
-    if (abs(current_quat.dot(new_quat) > 1-1e-6))
+    if (changed)
     {
         // Set new orientation
-        tf::quaternionTFToMsg(new_quat, goal_.plan.back().pose.orientation);
-
-        // Update the plan
-        local_planner_->setPlan(goal_.plan);
+        tf::quaternionTFToMsg(new_quat, q);
 
         // Visualize the end pose
         vis.publishGoalPoseMarker(goal_.plan.back());
+
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 void LocalPlannerInterface::generateHeadReference(const geometry_msgs::Twist& cmd)

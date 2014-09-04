@@ -1,5 +1,7 @@
 Constraint Based Base Navigation
 ==================
+[![Build Status](https://travis-ci.org/tue-robotics/cb_base_navigation.svg?branch=master)](https://travis-ci.org/tue-robotics/cb_base_navigation)
+
 Alternative to move_base (navigation stack ROS); a more simplistic base bavigation which works with the Costmap 2D ROS world model. In can handle goal position constraints and the goal orientation constraint is set up in a different way (see cb_base_navigation_msgs_srvs package).
 
 It provides two interfaces:

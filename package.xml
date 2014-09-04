@@ -2,7 +2,7 @@
 <package>
   <name>cb_base_navigation</name>
   <version>0.0.0</version>
-  <description>Base Navigation which works with the Costmap 2D ROS world model. It can generate plans based on a set of goal position constraints. Furthermore it can check if a plan is still valid. This global planner does not take the robot's configuration into account. This package also provides the local planner and an interface to communicate with the local planner.</description>
+  <description>Alternative to move_base (navigation stack ROS); a more simplistic base bavigation which works with the Costmap 2D ROS world model. In can handle goal position constraints and the goal orientation constraint is set up in a different way (see cb_base_navigation_msgs_srvs package).</description>
 
   <maintainer email="reinzor@gmail.com">Rein Appeldoorn</maintainer>
 

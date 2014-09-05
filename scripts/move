@@ -21,8 +21,8 @@ constraint = sys.argv[2]
 
 rospy.init_node('move')
 
-plan_pub = rospy.Publisher('/base_navigation/action_server/goal', LocalPlannerActionGoal)
-get_plan_client = rospy.ServiceProxy("/base_navigation/get_plan_srv", GetPlan)
+plan_pub = rospy.Publisher('/cb_base_navigation/local_planner_interface/action_server/goal', LocalPlannerActionGoal)
+get_plan_client = rospy.ServiceProxy("/cb_base_navigation/global_planner_interface/get_plan_srv", GetPlan)
 
 pcs = []
 pc = PositionConstraint()

@@ -5,7 +5,6 @@ python:
   - "2.7"
 compiler:
   - gcc
-  - clang
 env:
 # - ROS_DISTRO=groovy
   - ROS_DISTRO=hydro

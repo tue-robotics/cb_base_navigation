@@ -1,7 +1,7 @@
-#local_planner  : cb_local_planner/AmigoLocalPlanner
+local_planner  : cb_local_planner/AmigoLocalPlanner
 #local_planner  : base_local_planner/TrajectoryPlannerROS
 #local_planner : tue_dwa_planner/DWAPlannerROS
-local_planner : dwa_local_planner/DWAPlannerROS
+#local_planner : dwa_local_planner/DWAPlannerROS
 
 # Specific local planner parameters
 AmigoLocalPlanner:
@@ -58,9 +58,9 @@ DWAPlannerROS:
     global_frame_id: /map
 
     # Robot configuration parameters
-    acc_lim_x: 0.35
-    acc_lim_y: 0.35
-    acc_lim_th: 0.5
+    acc_lim_x: 0.2
+    acc_lim_y: 0.2
+    acc_lim_theta: 0.2
     
     max_trans_vel: 0.7
     min_trans_vel: 0.0

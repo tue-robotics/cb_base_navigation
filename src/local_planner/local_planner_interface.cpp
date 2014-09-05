@@ -209,8 +209,8 @@ void LocalPlannerInterface::generateHeadReference(const geometry_msgs::Twist& cm
 
     goal.priority = 5;
 
-    goal.pan_vel = .3;
-    goal.tilt_vel = .3;
+    goal.pan_vel = .2;
+    goal.tilt_vel = .2;
 
     goal.end_time = ros::Time::now().toSec() + 1;
 

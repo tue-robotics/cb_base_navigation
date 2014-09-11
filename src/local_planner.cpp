@@ -18,7 +18,7 @@ int main(int argc, char** argv){
     cb_local_planner::LocalPlannerInterface lpi(costmap);
 
     // Frequency of the base controller
-    ros::Rate r(10);
+    ros::Rate r(lpi.getControllerFrequency());
 
     // Profiler
     tue::Profiler profiler;

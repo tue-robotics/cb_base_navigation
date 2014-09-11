@@ -20,6 +20,7 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS& costmap) 
     nh.param("local_planner", local_planner, std::string("cb_local_planner/AmigoLocalPlanner"));
     nh.param("robot_base_frame", robot_base_frame_, std::string("/amigo/base_link"));;
     nh.param("global_frame", global_frame_, std::string("/map"));
+    nh.param("controller_frequency", controller_frequency_, 20.0);
 
     // ROS Publishers
     vel_pub_ = nh.advertise<geometry_msgs::Twist>("/amigo/base/references", 1);
@@ -54,7 +55,7 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS& costmap) 
     // Topic sub
     topic_sub_ = nh.subscribe("action_server/goal", 1, &LocalPlannerInterface::topicGoalCallback, this);
 
-    ROS_INFO_STREAM("Local planner of type: '" << local_planner << "' initialized. Ready to rumble!");
+    ROS_INFO_STREAM("Local planner of type: '" << local_planner << "' initialized. Ready to rumble @ " << controller_frequency_ << " hz!");
 }
 
 void LocalPlannerInterface::topicGoalCallback(const LocalPlannerActionGoalConstPtr& goal)

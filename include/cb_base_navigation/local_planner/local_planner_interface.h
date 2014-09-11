@@ -32,6 +32,7 @@ public:
     LocalPlannerInterface(costmap_2d::Costmap2DROS& costmap);
     ~LocalPlannerInterface();
 
+    double getControllerFrequency() { return controller_frequency_; }
     void doSomeMotionPlanning();
 
 private:
@@ -54,6 +55,7 @@ private:
     //! Planners + loaders
     boost::shared_ptr<nav_core::BaseLocalPlanner> local_planner_;
     pluginlib::ClassLoader<nav_core::BaseLocalPlanner> lp_loader_;
+    double controller_frequency_;
 
     //! Frame names + Tranforms
     std::string robot_base_frame_, global_frame_;

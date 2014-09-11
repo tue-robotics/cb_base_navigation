@@ -1,66 +1,13 @@
-local_planner  : cb_local_planner/AmigoLocalPlanner
-#local_planner  : base_local_planner/TrajectoryPlannerROS
-#local_planner : tue_dwa_planner/DWAPlannerROS
-#local_planner : dwa_local_planner/DWAPlannerROS
-
-# Specific local planner parameters
-AmigoLocalPlanner:
-    # velocity and acceleration bounds
-    max_vel_translation : 0.2  #0.5
-    max_acc_translation : 0.1  #0.15
-    max_vel_rotation    : 0.5   #0.5
-    max_acc_rotation    : 0.5 #2.5  #0.2
-
-    # the gain on the velocity
-    gain : 0.5
-
-    # rotation control parameters
-    c_theta:
-      kp: 5.0
-      ki: 0.01
-      kd: 1.0
-
-    # goal tolerance region
-    xy_goal_tolerance   : 0.1   #0.1
-    yaw_goal_tolerance  : 0.05  #0.05
-
-    # maximum allowed yaw error between robot and path while driving
-    max_yaw_error_driving : 0.045 * PI #1.4  # 0.25 * PI
-
-    # maximum allowed yaw error between robot and path while standing still
-    max_yaw_error_still   : 0.3
-
-    # the robot standing still is defined as having a lower velocity than STILL_MAX_VEL
-    still_max_vel         : 0.05
-
-    # if the robot is within MAX_STRAFE_DISTANCE from the goal, it strafes
-    max_strafe_distance     : 0.4
-
-    # if the robot is located more than MAX_PATH_DISTANCE from the nearest waypoint on the global path,
-    # it stops and a new plan must be generated
-    max_path_distance       : 0.5
-
-    # the local planner puts a local goal in front of the robot, and plans a straight line towards
-    # it (if the line is free of obstacles). MAX_LOCAL_GOAL_DISTANCE defines how far this local goal
-    # located from the robot. If the robot should stick to the global path more, decrease this value.
-    # However, small values may result in 'wobbely' behavior (stick to th path too much).
-    max_local_goal_distance : 0.3
-
-    # the local planner looks ahead LOOK_AHEAD meters along the global path. If it encounters
-    # and obstacle on the path, it will command the robot to stop.
-    look_ahead : 1.5
-    # TODO
-    #local_look_ahead        : 1.5
-    #global_look_ahead       : 5.0
+local_planner : dwa_local_planner/DWAPlannerROS
 
 # Specific local planner parameters
 DWAPlannerROS:
     global_frame_id: /map
 
     # Robot configuration parameters
-    acc_lim_x: 0.2
-    acc_lim_y: 0.2
-    acc_lim_theta: 0.2
+    acc_lim_x: 0.35
+    acc_lim_y: 0.35
+    acc_lim_th: 0.5
     
     max_trans_vel: 0.7
     min_trans_vel: 0.0
@@ -119,3 +66,4 @@ DWAPlannerROS:
     # prune_plan: true
     
     publish_cost_grid_pc: true
+

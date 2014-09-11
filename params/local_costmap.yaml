@@ -5,8 +5,8 @@ robot_base_frame: /amigo/base_link
 rolling_window: true
 track_unknown_space: true
 resolution: 0.05
-width: 8
-height: 8
+width: 4
+height: 4
 robot_radius: 0.35
 
 update_frequency: 0.0

@@ -191,6 +191,16 @@ void AStarPlannerGPP::planToWorld(const std::vector<int>& plan_xs, const std::ve
         pose.header.frame_id = global_frame;
         pose.pose.position.x = world_x;
         pose.pose.position.y = world_y;
+        pose.pose.position.z = 0;
+
+        if (i+1 < plan_xs.size())
+        {
+            global_costmap_ros_->getCostmap()->mapToWorld(plan_xs[i+1], plan_ys[i+1], world_x, world_y);
+            double yaw = atan2(world_y - pose.pose.position.y,
+                               world_x - pose.pose.position.x);
+            pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
+        }
+
         plan.push_back(pose);
     }
 }

@@ -78,6 +78,11 @@ int main(int argc, char** argv){
         // Spin and sleep
         ros::spinOnce();
         r.sleep();
+
+        if (r.cycleTime() > r.expectedCycleTime())
+        {
+            ROS_WARN_STREAM("LPI: Local planner rate of " << lpi.getControllerFrequency() << " hz not met. " << profiler);
+        }
     }
 
     return(0);

@@ -175,7 +175,6 @@ void AStarPlannerGPP::calculateMapConstraintArea(std::vector<unsigned int>& mx, 
             //ROS_INFO_STREAM("Pushing back in map point: " << x << ";" << y);
         }
     }
-
 }
 
 void AStarPlannerGPP::planToWorld(const std::vector<int>& plan_xs, const std::vector<int>& plan_ys, std::vector<geometry_msgs::PoseStamped>& plan)

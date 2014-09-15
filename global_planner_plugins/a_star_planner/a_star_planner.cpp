@@ -1,5 +1,3 @@
-// Planner goes out of bound .. ouch (fix this << Rein)
-
 #include "a_star_planner.h"
 
 using namespace std;
@@ -78,7 +76,6 @@ void AStarPlanner::resize(int width, int height) {
 }
 
 bool AStarPlanner::plan(std::vector<unsigned int> mx_start, std::vector<unsigned int> my_start, int mx_goal, int my_goal, std::vector<int>& plan_xs, std::vector<int>& plan_ys, bool best_heuristic) {
-
 	// - initialize all cells in visited_map to false
 	// - determine minimum cell cost in cost map
 	double min_cell_cost = 1; //DBL_MAX;
@@ -94,10 +91,14 @@ bool AStarPlanner::plan(std::vector<unsigned int> mx_start, std::vector<unsigned
 	list<CellInfo*> visited_cells;   // remember visited cells to be able to clear memory
 
     // add start points to priority queue and visited map
-    for (unsigned int i = 0; i < mx_start.size(); ++i) {
-        CellInfo* start = new CellInfo(mx_start[i], my_start[i], 0, calculateHeuristicCost(mx_start[i], my_start[i], mx_goal, my_goal, min_cell_cost));
-        visited_map_[mx_start[i]][my_start[i]] = 0;
-        Q.push(start);
+    for (unsigned int i = 0; i < mx_start.size(); ++i)
+    {
+        if (mx_start[i] > 0 && mx_start[i] < width_-1 && my_start[i] > 0 && my_start[i] < height_-1)
+        {
+            CellInfo* start = new CellInfo(mx_start[i], my_start[i], 0, calculateHeuristicCost(mx_start[i], my_start[i], mx_goal, my_goal, min_cell_cost));
+            visited_map_[mx_start[i]][my_start[i]] = 0;
+            Q.push(start);
+        }
     }
 
 	CellInfo* goal_cell = 0;

@@ -1,12 +1,16 @@
 #include "cb_base_navigation/global_planner/visualization.h"
 
+#include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
+
 namespace cb_global_planner {
 
 Visualization::Visualization()
 {
     ros::NodeHandle nh("~/visualization");
-    goal_positions_marker_pub_ = nh.advertise<visualization_msgs::Marker>("markers/goal_positions_marker",1);
-    global_plan_marker_pub_ = nh.advertise<visualization_msgs::Marker>("markers/global_plan_marker",1);
+    goal_positions_marker_pub_ = nh.advertise<visualization_msgs::Marker>("markers/goal_positions", 1);
+    global_plan_marker_pub_ = nh.advertise<visualization_msgs::Marker>("markers/global_plan", 1);
+    global_plan_marker_array_pub_ = nh.advertise<visualization_msgs::MarkerArray>("marker_arrays/global_plan", 1);
 }
 
 void Visualization::publishGlobalPlanMarker(const std::vector<geometry_msgs::PoseStamped>& plan, const std::string& frame) {
@@ -24,11 +28,44 @@ void Visualization::publishGlobalPlanMarker(const std::vector<geometry_msgs::Pos
     line_strip.action = visualization_msgs::Marker::ADD;
 
     // Push back all pnts
-    std::vector<geometry_msgs::PoseStamped>::const_iterator it = plan.begin();
-    for (; it != plan.end(); ++it) { line_strip.points.push_back(it->pose.position); }
+    for (std::vector<geometry_msgs::PoseStamped>::const_iterator it = plan.begin(); it != plan.end(); ++it)
+        line_strip.points.push_back(it->pose.position);
 
     // Publish plan
     global_plan_marker_pub_.publish(line_strip);
+}
+
+void Visualization::publishGlobalPlanMarkerArray(const std::vector<geometry_msgs::PoseStamped>& plan, const std::string& frame)
+{
+    visualization_msgs::MarkerArray array;
+
+    visualization_msgs::Marker m;
+
+    m.scale.x = 0.04;
+    m.scale.y = 0.02;
+    m.scale.z = 0.02;
+
+    m.header.frame_id = frame;
+    m.header.stamp = ros::Time::now();
+    m.color.a = 1;
+    m.color.r = 1;
+    m.color.g = 0;
+    m.color.b = 1;
+    m.id = 0;
+    m.type = visualization_msgs::Marker::ARROW;
+    m.action = visualization_msgs::Marker::ADD;
+    m.lifetime = ros::Duration(5.0);
+
+    // Push back all pnts
+    for (std::vector<geometry_msgs::PoseStamped>::const_iterator it = plan.begin(); it != plan.end(); ++it)
+    {
+        m.pose = it->pose;
+        m.id++;
+        array.markers.push_back(m);
+    }
+
+    // Publish plan
+    global_plan_marker_array_pub_.publish(array);
 }
 
 void Visualization::publishGoalPositionsMarker(const std::vector<tf::Point>& positions, const std::string& frame)
@@ -49,8 +86,8 @@ void Visualization::publishGoalPositionsMarker(const std::vector<tf::Point>& pos
     cube_list.action = visualization_msgs::Marker::ADD;
 
     // Push back all pnts
-    std::vector<tf::Point>::const_iterator it = positions.begin();
-    for (; it != positions.end(); ++it) {
+    for (std::vector<tf::Point>::const_iterator it = positions.begin(); it != positions.end(); ++it)
+    {
         geometry_msgs::Point p;
         p.x = it->x();
         p.y = it->y();

@@ -10,7 +10,6 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <visualization_msgs/Marker.h>
 #include <tf/transform_datatypes.h>
 
 namespace cb_global_planner
@@ -37,6 +36,13 @@ public:
     void publishGlobalPlanMarker(const std::vector<geometry_msgs::PoseStamped>& plan, const std::string& frame = "/map");
 
     /**
+     * @brief  Publishes a specified plan with poses
+     * @param  plan plan to be published
+     * @param  frame coordinate frame
+     */
+    void publishGlobalPlanMarkerArray(const std::vector<geometry_msgs::PoseStamped>& plan, const std::string& frame = "/map");
+
+    /**
      * @brief  Publishes the goal area
      * @param  positions set of points which meet the end goal position constraints
      * @param  frame coordinate frame
@@ -44,7 +50,7 @@ public:
     void publishGoalPositionsMarker(const std::vector<tf::Point>& positions, const std::string& frame = "/map");
 
 private:
-    ros::Publisher global_plan_marker_pub_, goal_positions_marker_pub_;
+    ros::Publisher global_plan_marker_array_pub_, global_plan_marker_pub_, goal_positions_marker_pub_;
 
 };
 

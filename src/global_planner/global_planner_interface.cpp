@@ -111,6 +111,7 @@ bool GlobalPlannerInterface::getPlan(GetPlanRequest &req, GetPlanResponse &resp)
     if(global_planner_->makePlan(global_pose_,req.goal_position_constraints[0],resp.plan,goal_positions)) {
         // Visualize me something
         vis_.publishGlobalPlanMarker(resp.plan);
+        vis_.publishGlobalPlanMarkerArray(resp.plan);
         vis_.publishGoalPositionsMarker(goal_positions);
         resp.succes = true;
     } else {

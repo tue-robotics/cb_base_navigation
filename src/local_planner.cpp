@@ -32,6 +32,8 @@ int main(int argc, char** argv){
     else
         ROS_INFO("LPI: Costmap thread not running: costmap will be updated in the loop.");
 
+    ros::Time t_last_rate_met = ros::Time::now();
+
     while(ros::ok()) {
 
         tue::ScopedTimer timer(profiler, "total");
@@ -69,19 +71,29 @@ int main(int argc, char** argv){
             }
 
             // Publish the map for visualization
-            costmap.getPublisher()->publishCostmap();
+            {
+                tue::ScopedTimer timer(profiler, "PublishCostmap");
+                costmap.getPublisher()->publishCostmap();
+            }
+        }
+
+        {
+            // Spin and sleep
+            tue::ScopedTimer timer(profiler, "spin");
+            ros::spinOnce();
+            r.sleep();
         }
 
         // Publish feedback
         profile_pub.publish();
 
-        // Spin and sleep
-        ros::spinOnce();
-        r.sleep();
+        if (r.cycleTime() < r.expectedCycleTime())
+            t_last_rate_met = ros::Time::now();
 
-        if (r.cycleTime() > r.expectedCycleTime())
+        if ((ros::Time::now() - t_last_rate_met).toSec() > 1.0) // When we do not meet the rate, print it every 1 second
         {
             ROS_WARN_STREAM("LPI: Local planner rate of " << lpi.getControllerFrequency() << " hz not met. " << profiler);
+            t_last_rate_met = ros::Time::now();
         }
     }
 

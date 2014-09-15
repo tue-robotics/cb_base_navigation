@@ -1,17 +1,15 @@
 local_planner : dwa_local_planner/DWAPlannerROS
+controller_frequency: 20.0
 
 # Specific local planner parameters
 DWAPlannerROS:
-    global_frame_id: /map
 
-    # Robot configuration parameters
-    acc_lim_x: 0.35
-    acc_lim_y: 0.35
-    acc_lim_th: 0.5
-    
+    #### base_local_planner::LocalPlannerLimits ###
+
+    # velocities
     max_trans_vel: 0.7
     min_trans_vel: 0.0
-    
+
     max_vel_x: 0.7
     min_vel_x: -0.1
    
@@ -20,50 +18,46 @@ DWAPlannerROS:
     
     max_rot_vel: 1.0
     min_rot_vel: 0.1
-    
-    # Goal tolerance parameters
-    # yaw_goal_tolerance: 0.05
-    # xy_goal_tolerance: 0.10
-    # latch_xy_goal_tolerance: false
-    
+
+    # accelerations
+    acc_lim_trans: 0.35
+
+    acc_lim_x: 0.35
+    acc_lim_y: 0.35
+
+    acc_lim_th: 0.5
+
+    # Goal
+    xy_goal_tolerance: 0.1
+    yaw_goal_tolerance: 0.1
+
+    # When stopped?
+    trans_stopped_vel: 0.1
+    rot_stopped_vel: 0.1
+
+    # Prune the plan?
+    prune_plan: true
+
+    ### DWA SPECIFIC PARAMETERS ###
+
     # Forward simulation parameters
     sim_time: 2.5
+    sim_period: 0.05 # 20 hz
+
     sim_granularity: 0.05
-    vx_samples: 10
+    angular_sim_granularity: 0.05
+
+    vx_samples: 4
     vy_samples: 10
-    vtheta_samples: 10
-    controller_frequency: 5
-    penalize_negative_x: true
-    
-    # Trajectory scoring parameters
-    path_distance_bias: 32.0
-    # goal_distance_bias: 24.0
-    occdist_scale: 0.01
-    # forward_point_distance: 0.325 # OBSOLETE
-    switch_distance: 0.5
-    #pen_pos_x: 0.0
-    pen_neg_x: 75.0
-    pen_pos_y: 75.0
-    pen_neg_y: 75.0
-    #pen_pos_theta: 0.0
-    #pen_neg_theta: 0.0
-    orientation_bias: 0.5
-    # stop_time_buffer: 0.2
-    # scaling speed: 0.2*max_trans_vel = 0.14
-    scaling_speed: 0.07
-    # max scaling factor: max_scale*circumscribed_radius = s_stop --> max_scaling_factor = 0.5*max_trans_vel^2/max_acc / circumscribed_radius
-    # = 0.5*0.7^2/(sqrt(2*0.5^2))/0.46 = 0.75
-    #max_scaling_factor: 0.75
-    # = 0.5*0.7^2/0.5/0.46 = 1.06
-    max_scaling_factor: 1.06
-    
+    vth_samples: 10
+
     use_dwa: true
-    
-    # Oscillation prevention parameters
-    oscillation_reset_dist: 0.05
-    
-    # Global plan parameters
-    # prune_plan: true
-    
-    publish_cost_grid_pc: true
+
+    # Switching behavior
+    swith_goal_distance: 0.5
+    swith_plan_distance: 0.5
+    swith_yaw_error: 1.6
+
+    # Cost functions    
+    # TODO
 

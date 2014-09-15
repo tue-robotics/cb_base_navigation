@@ -42,32 +42,12 @@ int main(int argc, char** argv){
         costmap_thread_running = costmap.getMapUpdateFrequency() > 0;
 
         // If we're not running an extra thread to update the costmap, do it in this loop
-        if (costmap_thread_running)
-        {
-            // Prevent the costmap from updating
-            boost::unique_lock< boost::shared_mutex > lock(*(costmap.getCostmap()->getLock()));
-
-            // Control the base
-            {
-                tue::ScopedTimer timer(profiler, "LocalPlanner");
-                lpi.doSomeMotionPlanning();
-            }
-
-            // Let the costmap continue updating
-            lock.unlock();
-        }
-        else
+        if (!costmap_thread_running)
         {
             // Update the costmap just before we're going to control the base
             {
                 tue::ScopedTimer timer(profiler, "updateCostmap");
                 costmap.updateMap();
-            }
-
-            // Control the base
-            {
-                tue::ScopedTimer timer(profiler, "LocalPlanner");
-                lpi.doSomeMotionPlanning();
             }
 
             // Publish the map for visualization
@@ -76,6 +56,18 @@ int main(int argc, char** argv){
                 costmap.getPublisher()->publishCostmap();
             }
         }
+
+        // Prevent the costmap from updating
+        boost::unique_lock< boost::shared_mutex > lock(*(costmap.getCostmap()->getLock()));
+
+        // Control the base
+        {
+            tue::ScopedTimer timer(profiler, "LocalPlanner");
+            lpi.doSomeMotionPlanning();
+        }
+
+        // Let the costmap continue updating
+        lock.unlock();
 
         {
             // Spin and sleep

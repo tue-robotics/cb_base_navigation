@@ -182,26 +182,28 @@ void AStarPlannerGPP::planToWorld(const std::vector<int>& plan_xs, const std::ve
 {
     ros::Time plan_time = ros::Time::now();
     std::string global_frame = global_costmap_ros_->getGlobalFrameID();
+
+    plan.resize(plan_xs.size());
     for(unsigned int i = 0; i < plan_xs.size(); ++i) {
         double world_x, world_y;
         global_costmap_ros_->getCostmap()->mapToWorld(plan_xs[i], plan_ys[i], world_x, world_y);
 
-        geometry_msgs::PoseStamped pose;
-        pose.header.stamp = plan_time;
-        pose.header.frame_id = global_frame;
-        pose.pose.position.x = world_x;
-        pose.pose.position.y = world_y;
-        pose.pose.position.z = 0;
+        plan[i].header.stamp = plan_time;
+        plan[i].header.frame_id = global_frame;
+        plan[i].pose.position.x = world_x;
+        plan[i].pose.position.y = world_y;
+        plan[i].pose.position.z = 0;
 
         if (i+1 < plan_xs.size())
         {
             global_costmap_ros_->getCostmap()->mapToWorld(plan_xs[i+1], plan_ys[i+1], world_x, world_y);
-            double yaw = atan2(world_y - pose.pose.position.y,
-                               world_x - pose.pose.position.x);
-            pose.pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
+            double yaw = atan2(world_y - plan[i].pose.position.y, world_x - plan[i].pose.position.x);
+            plan[i].pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
         }
-
-        plan.push_back(pose);
+        else if (plan_xs.size() > 1)
+        {
+            plan[i].pose.orientation = plan[i-1].pose.orientation;
+        }
     }
 }
 

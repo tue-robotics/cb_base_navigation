@@ -53,8 +53,20 @@ void Visualization::publishGlobalPlanMarkerArray(const std::vector<geometry_msgs
     m.color.b = 1;
     m.id = 0;
     m.type = visualization_msgs::Marker::ARROW;
+
+    // Clear the markers
+    static int prev = 0;
+    m.action = visualization_msgs::Marker::DELETE;
+    for (unsigned int i = 0; i < prev; ++i)
+    {
+        m.id++;
+        array.markers.push_back(m);
+    }
+    global_plan_marker_array_pub_.publish(array);
+
     m.action = visualization_msgs::Marker::ADD;
-    m.lifetime = ros::Duration(5.0);
+    array.markers.clear();
+    m.id = 0;
 
     // Push back all pnts
     for (std::vector<geometry_msgs::PoseStamped>::const_iterator it = plan.begin(); it != plan.end(); ++it)
@@ -63,6 +75,8 @@ void Visualization::publishGlobalPlanMarkerArray(const std::vector<geometry_msgs
         m.id++;
         array.markers.push_back(m);
     }
+
+    prev = m.id;
 
     // Publish plan
     global_plan_marker_array_pub_.publish(array);

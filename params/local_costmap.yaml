@@ -69,7 +69,7 @@ unknown_free_space:
 free_space_inflation:
     use_footprint: false
     target_cell_value: 255
-    dilation_cell_value: 100
+    dilation_cell_value: 170
     dilation_radius: 0.7
     inflation_radius: 0.7
 

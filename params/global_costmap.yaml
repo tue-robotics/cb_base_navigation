@@ -28,5 +28,5 @@ configuration_space:
     use_footprint: false
     target_cell_value: 254
     dilation_cell_value: 253
-    dilation_radius: 0.4 # 5cm margin
-    inflation_radius: 0.4 
+    dilation_radius: 0.37 # 2cm margin
+    inflation_radius: 0.37 

@@ -4,7 +4,7 @@ global_frame: /map
 robot_base_frame: /amigo/base_link
 rolling_window: true
 track_unknown_space: true
-resolution: 0.05
+resolution: 0.025
 width: 4
 height: 4
 robot_radius: 0.35
@@ -22,7 +22,7 @@ plugins:
     - {name: recent_obstacles,                  type: "costmap_2d::ObstacleLayer"}
 
     # Obstacle inflation
-    - {name: obstacle_inflation,                type: "costmap_2d::InflationLayer"}
+    - {name: eliminate_small_occlusions,        type: "costmap_2d::InflationLayer"}
 
     # Free space
     - {name: unknown_free_space,                type: "costmap_2d::ObstacleLayer"}
@@ -33,8 +33,9 @@ plugins:
     # Clear the robot footprint
     - {name: robot_footprint,                   type: "costmap_2d::FootprintLayer"}
 
-    # Go to the configuration space
-    - {name: configuration_space,               type: "costmap_2d::InflationLayerFull"}
+    # Obstacle inflation
+    - {name: configuration_space,               type: "costmap_2d::InflationLayer"}
+
 
 # LAYER CONFIGURATION
 
@@ -42,6 +43,7 @@ plugins:
 ed_occupancy_grid:
     map_topic: /ed_map
     track_unknown_space: true
+    use_maximum: true
 
 recent_obstacles:
     occupied_to_default_time: 2.0
@@ -50,16 +52,17 @@ recent_obstacles:
     torso_laser:  {data_type: LaserScan, sensor_frame: /amigo/torso_laser, topic: /amigo/torso_laser, observation_persistence: 0.0, inf_is_valid: true, obstacle_range: 20.0, marking: true, clearing: false, ray_trace_range: 20.0}
     top_kinect: {data_type: PointCloud2, sensor_frame: /amigo/top_kinect/openni_depth_optical_frame, topic: /amigo/top_kinect/rgb/points, observation_persistence: 0.0, expected_update_rate: 1.0, min_obstacle_height: 0.05, max_obstacle_height: 2, obstacle_range: 5.0}
 
-# Obstacle inflation
-obstacle_inflation:
+# Eliminate small occlusions by inflating the obstacles with a radius of obstacles that can popup from unknown space
+eliminate_small_occlusions:
     use_footprint: false
     target_cell_value: 254
     dilation_cell_value: 253
-    dilation_radius: 0.06 # Wall margin
-    inflation_radius: 0.3 # Optimization
+    dilation_radius: 0.2 # radius of moving obstacles
+    inflation_radius: 0.2 # radius of moving obstacles
 
 # Free Space modeling
 unknown_free_space:
+    combination_method: 1
     track_unknown_space: true
     free_to_default_time: 30.0
     observation_sources: base_laser
@@ -75,4 +78,9 @@ free_space_inflation:
 
 # Workspace to configuration space 
 configuration_space:
-    dilation_radius: 0.35 # Should be the robot inscribed radius
+    use_footprint: false
+    target_cell_value: 254
+    dilation_cell_value: 253
+    dilation_radius: 0.35 # inscribed radius
+    inflation_radius: 1.0 # optimization
+    cost_scaling_factor: 5.0

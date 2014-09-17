@@ -6,8 +6,6 @@ rolling_window: false
 track_unknown_space: false
 resolution: 0.05
 
-robot_radius: 0.37
-
 update_frequency: 1.0
 publish_frequency: 1.0
 
@@ -27,4 +25,8 @@ ed_occupancy_grid:
 
 # Workspace to configuration space 
 configuration_space:
-    inflation_radius: 1.0 
+    use_footprint: false
+    target_cell_value: 254
+    dilation_cell_value: 253
+    dilation_radius: 0.4 # 5cm margin
+    inflation_radius: 0.4 

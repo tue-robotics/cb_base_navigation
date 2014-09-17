@@ -44,8 +44,8 @@ DWAPlannerROS:
     sim_time: 2.5
     sim_period: 0.05 # 20 hz
 
-    sim_granularity: 0.05
-    angular_sim_granularity: 0.05
+    sim_granularity: 0.1
+    angular_sim_granularity: 0.1
 
     vx_samples: 4
     vy_samples: 10

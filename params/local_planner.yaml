@@ -7,7 +7,7 @@ DWAPlannerROS:
     #### base_local_planner::LocalPlannerLimits ###
 
     # velocities
-    max_trans_vel: 0.7
+    max_trans_vel: 0.4
     min_trans_vel: 0.0
 
     max_vel_x: 0.7

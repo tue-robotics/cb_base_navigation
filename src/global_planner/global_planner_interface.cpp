@@ -4,6 +4,10 @@ namespace cb_global_planner {
 
 GlobalPlannerInterface::~GlobalPlannerInterface()
 {
+    // Clean things up
+    global_planner_.reset();
+
+    delete tf_;
 }
 
 GlobalPlannerInterface::GlobalPlannerInterface(costmap_2d::Costmap2DROS& costmap) :

@@ -6,6 +6,12 @@ namespace cb_local_planner {
 
 LocalPlannerInterface::~LocalPlannerInterface()
 {
+    // Clean things up
+    local_planner_.reset();
+
+    delete tf_;
+    delete head_ref_ac_;
+    delete action_server_;
 }
 
 LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS& costmap) :
@@ -16,7 +22,7 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS& costmap) 
     ros::NodeHandle nh("~");
 
     // Parameter setup
-    std::string global_planner, local_planner;
+    std::string local_planner;
     nh.param("local_planner", local_planner, std::string("cb_local_planner/AmigoLocalPlanner"));
     nh.param("robot_base_frame", robot_base_frame_, std::string("/amigo/base_link"));;
     nh.param("global_frame", global_frame_, std::string("/map"));

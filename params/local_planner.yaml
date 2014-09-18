@@ -1,5 +1,5 @@
 local_planner : dwa_local_planner/DWAPlannerROS
-controller_frequency: 20.0
+controller_frequency: 10.0
 
 # Specific local planner parameters
 DWAPlannerROS:
@@ -42,7 +42,7 @@ DWAPlannerROS:
 
     # Forward simulation parameters
     sim_time: 2.5
-    sim_period: 0.05 # 20 hz
+    sim_period: 0.1 # 10 hz
 
     sim_granularity: 0.1
     angular_sim_granularity: 0.1

@@ -5,8 +5,8 @@ robot_base_frame: /amigo/base_link
 rolling_window: true
 track_unknown_space: true
 resolution: 0.025
-width: 6
-height: 6
+width: 4
+height: 4
 robot_radius: 0.35
 
 update_frequency: 0.0
@@ -74,8 +74,8 @@ free_space_inflation:
     use_footprint: false
     target_cell_value: 255
     dilation_cell_value: 170
-    dilation_radius: 1.1
-    inflation_radius: 1.1
+    dilation_radius: 0.7
+    inflation_radius: 0.7
 
 # Workspace to configuration space 
 configuration_space:

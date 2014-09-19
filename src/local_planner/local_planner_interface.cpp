@@ -1,5 +1,10 @@
 #include "cb_base_navigation/local_planner/local_planner_interface.h"
 
+#include <tue/profiling/ros/profile_publisher.h>
+#include <tue/profiling/scoped_timer.h>
+
+#include <boost/thread.hpp>
+
 using namespace cb_planner_msgs_srvs;
 
 namespace cb_local_planner {
@@ -12,9 +17,12 @@ LocalPlannerInterface::~LocalPlannerInterface()
     delete tf_;
     delete head_ref_ac_;
     delete action_server_;
+
+    controller_thread_->interrupt();
+    controller_thread_->join();
 }
 
-LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS& costmap) :
+LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap) :
     lp_loader_("nav_core", "nav_core::BaseLocalPlanner"),
     tf_(new tf::TransformListener(ros::Duration(10))),
     costmap_(costmap)
@@ -42,7 +50,7 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS& costmap) 
             }
         }
         local_planner_ = lp_loader_.createInstance(local_planner);
-        local_planner_->initialize(lp_loader_.getName(local_planner), tf_, &costmap_);
+        local_planner_->initialize(lp_loader_.getName(local_planner), tf_, costmap_);
     } catch (const pluginlib::PluginlibException& ex)
     {
         ROS_FATAL("Failed to create the %s planner, are you sure it is properly registered and that the containing library is built? Exception: %s", local_planner.c_str(), ex.what());
@@ -61,11 +69,16 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS& costmap) 
     // Topic sub
     topic_sub_ = nh.subscribe("action_server/goal", 1, &LocalPlannerInterface::topicGoalCallback, this);
 
-    ROS_INFO_STREAM("Local planner of type: '" << local_planner << "' initialized. Ready to rumble @ " << controller_frequency_ << " hz!");
+    ROS_INFO_STREAM("Local planner of type: '" << local_planner << "' initialized.");
+
+    // Start the controller thread
+    controller_thread_ = new boost::thread(boost::bind(&LocalPlannerInterface::controllerThread, this));
 }
 
 void LocalPlannerInterface::topicGoalCallback(const LocalPlannerActionGoalConstPtr& goal)
 {
+    boost::unique_lock<boost::mutex> lock(goal_mtx_); // goal is altered
+
     ROS_INFO("Incoming topic plan.");
 
     goal_ = goal->goal;
@@ -80,6 +93,8 @@ void LocalPlannerInterface::topicGoalCallback(const LocalPlannerActionGoalConstP
 
 void LocalPlannerInterface::actionServerSetPlan()
 {
+    boost::unique_lock<boost::mutex> lock(goal_mtx_); // goal is altered
+
     ROS_INFO("Incoming actionlib plan.");
 
     goal_ = *action_server_->acceptNewGoal();
@@ -94,12 +109,75 @@ void LocalPlannerInterface::actionServerSetPlan()
 
 void LocalPlannerInterface::actionServerPreempt()
 {
+    boost::unique_lock<boost::mutex> lock(goal_mtx_); // goal is altered
+
     action_server_->setPreempted();
     goal_.plan.clear();
 }
 
+void LocalPlannerInterface::controllerThread()
+{
+    tue::ProfilePublisher profile_pub;
+    tue::Profiler profiler;
+    profile_pub.initialize(profiler);
+
+    ros::Rate r(controller_frequency_);
+
+    ROS_INFO_STREAM("Started local planner thread @ " << controller_frequency_ << " hz!");
+
+    if (costmap_->getMapUpdateFrequency() > 0)
+    {
+        ROS_ERROR("Local costmap map update frequency should be 0, it is now: %2f Hz. This is not allowed by the Local Planner Interface!",costmap_->getMapUpdateFrequency());
+        ROS_ERROR("    [[  Shutting down ...  ]]     ");
+        exit(1);
+    }
+
+    while (ros::ok())
+    {
+        tue::ScopedTimer timer(profiler, "total");
+
+        {
+            tue::ScopedTimer timer(profiler, "updateMap()");
+            costmap_->updateMap();
+        }
+
+        {
+            tue::ScopedTimer timer(profiler, "publishCostmap()");
+            costmap_->getPublisher()->publishCostmap();
+        }
+
+        {
+            tue::ScopedTimer timer(profiler, "publishCostmap()");
+            doSomeMotionPlanning();
+        }
+
+        {
+            tue::ScopedTimer timer(profiler, "rateCheck()");
+            static ros::Time t_last_rate_met = ros::Time::now();
+
+            if (r.cycleTime() < r.expectedCycleTime())
+                t_last_rate_met = ros::Time::now();
+
+            if ((ros::Time::now() - t_last_rate_met).toSec() > 1.0) // When we do not meet the rate, print it every 1 second
+            {
+                ROS_WARN_STREAM("LPI: Local planner rate of " << 1.0 / r.expectedCycleTime().toSec() << " hz not met. " << profiler);
+                t_last_rate_met = ros::Time::now();
+            }
+        }
+
+        {
+            tue::ScopedTimer timer(profiler, "sleep()");
+            r.sleep();
+        }
+
+        profile_pub.publish();
+    }
+}
+
 void LocalPlannerInterface::doSomeMotionPlanning()
 {
+    boost::unique_lock<boost::mutex> lock(goal_mtx_);
+
     if (!isGoalSet()) return;
 
     // 1) Update the end goal orientation due to the orientation constraint, if updated, set new plan
@@ -137,7 +215,7 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
     // Request the desired transform from constraint frame to map
     tf::StampedTransform constraint_to_world_tf;
     try {
-        tf_->lookupTransform(costmap_.getGlobalFrameID(), goal_.orientation_constraint.frame, ros::Time(0), constraint_to_world_tf);
+        tf_->lookupTransform(costmap_->getGlobalFrameID(), goal_.orientation_constraint.frame, ros::Time(0), constraint_to_world_tf);
         feedback_.frame_exists = true;
     } catch(tf::TransformException& ex) {
         ROS_ERROR("Failed to get robot orientation constraint frame");
@@ -186,7 +264,7 @@ void LocalPlannerInterface::generateHeadReference(const geometry_msgs::Twist& cm
 {
     // send a goal to the action
     head_ref::HeadReferenceGoal goal;
-    goal.target_point.header.frame_id = costmap_.getBaseFrameID();
+    goal.target_point.header.frame_id = costmap_->getBaseFrameID();
     goal.target_point.header.stamp = ros::Time::now();
 
     double dt = 3; //! TODO: Hardcoded values in this function

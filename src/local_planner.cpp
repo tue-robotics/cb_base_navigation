@@ -4,7 +4,8 @@
 #include <tue/profiling/ros/profile_publisher.h>
 #include <tue/profiling/scoped_timer.h>
 
-int main(int argc, char** argv){
+int main(int argc, char** argv)
+{
 
     ros::init(argc, argv, "cb_local_planner_interface");
 
@@ -14,80 +15,10 @@ int main(int argc, char** argv){
     // Setup the global costmap
     costmap_2d::Costmap2DROS costmap("local_costmap", tf);
 
-    // Create the base controller
-    cb_local_planner::LocalPlannerInterface lpi(costmap);
+    // Create the base controller interface
+    cb_local_planner::LocalPlannerInterface lpi(&costmap);
 
-    // Frequency of the base controller
-    ros::Rate r(lpi.getControllerFrequency());
+    ros::spin();
 
-    // Profiler
-    tue::Profiler profiler;
-    tue::ProfilePublisher profile_pub;
-    profile_pub.initialize(profiler);
-
-    bool costmap_thread_running = costmap.getMapUpdateFrequency() > 0;
-
-    if (costmap_thread_running)
-        ROS_INFO("LPI: Costmap thread is running: Lock required each cycle.");
-    else
-        ROS_INFO("LPI: Costmap thread not running: costmap will be updated in the loop.");
-
-    ros::Time t_last_rate_met = ros::Time::now();
-
-    while(ros::ok()) {
-
-        tue::ScopedTimer timer(profiler, "total");
-
-        // Check if we have a costmap thread running
-        costmap_thread_running = costmap.getMapUpdateFrequency() > 0;
-
-        // If we're not running an extra thread to update the costmap, do it in this loop
-        if (!costmap_thread_running)
-        {
-            // Update the costmap just before we're going to control the base
-            {
-                tue::ScopedTimer timer(profiler, "updateCostmap");
-                costmap.updateMap();
-            }
-
-            // Publish the map for visualization
-            {
-                tue::ScopedTimer timer(profiler, "PublishCostmap");
-                costmap.getPublisher()->publishCostmap();
-            }
-        }
-
-        // Prevent the costmap from updating
-        boost::unique_lock< boost::shared_mutex > lock(*(costmap.getCostmap()->getLock()));
-
-        // Control the base
-        {
-            tue::ScopedTimer timer(profiler, "LocalPlanner");
-            lpi.doSomeMotionPlanning();
-        }
-
-        // Let the costmap continue updating
-        lock.unlock();
-
-        {
-            // Spin and sleep
-            tue::ScopedTimer timer(profiler, "spin");
-            ros::spinOnce();
-            r.sleep();
-        }
-
-        // Publish feedback
-        profile_pub.publish();
-
-        if (r.cycleTime() < r.expectedCycleTime())
-            t_last_rate_met = ros::Time::now();
-
-        if ((ros::Time::now() - t_last_rate_met).toSec() > 1.0) // When we do not meet the rate, print it every 1 second
-        {
-            ROS_WARN_STREAM("LPI: Local planner rate of " << lpi.getControllerFrequency() << " hz not met. " << profiler);
-            t_last_rate_met = ros::Time::now();
-        }
-    }
-
-    return(0);
+    return 0;
 }

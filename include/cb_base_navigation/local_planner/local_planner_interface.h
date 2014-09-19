@@ -19,6 +19,8 @@
 #include <head_ref/HeadReferenceAction.h>
 #include <actionlib/client/action_client.h>
 
+#include <tue/profiling/profiler.h>
+
 #define PI 3.14159265
 
 using namespace cb_planner_msgs_srvs;
@@ -29,13 +31,18 @@ class LocalPlannerInterface {
 
 public:
 
-    LocalPlannerInterface(costmap_2d::Costmap2DROS& costmap);
+    LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap);
     ~LocalPlannerInterface();
 
-    double getControllerFrequency() { return controller_frequency_; }
+private:
+
+    boost::mutex goal_mtx_;
+    boost::thread* controller_thread_;
+
+    void controllerThread();
     void doSomeMotionPlanning();
 
-private:
+    inline bool isGoalSet() { return goal_.plan.size() > 0; }
 
     //! ROS Communication
     ros::Publisher vel_pub_;
@@ -50,7 +57,6 @@ private:
     void actionServerPreempt();
     LocalPlannerGoal goal_;
     LocalPlannerFeedback feedback_;
-    inline bool isGoalSet() { return goal_.plan.size() > 0; }
 
     //! Planners + loaders
     boost::shared_ptr<nav_core::BaseLocalPlanner> local_planner_;
@@ -63,7 +69,7 @@ private:
     tf::Stamped<tf::Pose> global_pose_;
 
     //! Costmaps
-    costmap_2d::Costmap2DROS& costmap_;
+    costmap_2d::Costmap2DROS* costmap_;
 
     //! Helper functions
     bool updateEndGoalOrientation();
@@ -75,6 +81,8 @@ private:
     actionlib::ActionClient<head_ref::HeadReferenceAction>* head_ref_ac_;
     actionlib::ActionClient<head_ref::HeadReferenceAction>::GoalHandle head_ref_gh_;
     void generateHeadReference(const geometry_msgs::Twist& cmd);
+
+    ros::CallbackQueue cb_queue_;
 
 };
 

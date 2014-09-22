@@ -123,18 +123,14 @@ void LocalPlannerInterface::controllerThread()
 
     ros::Rate r(controller_frequency_);
 
-    ROS_INFO_STREAM("Started local planner thread @ " << controller_frequency_ << " hz!");
+    ROS_INFO_STREAM("LPI: Started local planner thread @ " << controller_frequency_ << " hz!");
 
     if (costmap_->getMapUpdateFrequency() > 0)
     {
-        ROS_ERROR("Local costmap map update frequency should be 0, it is now: %2f Hz. This is not allowed by the Local Planner Interface!",costmap_->getMapUpdateFrequency());
-        ROS_ERROR("    [[  Shutting down ...  ]]     ");
+        ROS_ERROR("LPI: Local costmap map update frequency should be 0, it is now: %2f Hz. This is not allowed by the Local Planner Interface!",costmap_->getMapUpdateFrequency());
+        ROS_ERROR("LPI:     [[  Shutting down ...  ]]     ");
         exit(1);
     }
-
-    // Wait untill the costmap is initialized
-    while (ros::ok() && !costmap_->getLayeredCostmap()->isInitialized())
-        ros::Rate(10).sleep();
 
     while (ros::ok())
     {
@@ -147,7 +143,8 @@ void LocalPlannerInterface::controllerThread()
 
         {
             tue::ScopedTimer timer(profiler, "publishCostmap()");
-            costmap_->getPublisher()->publishCostmap();
+            if (costmap_->getLayeredCostmap()->isInitialized())
+                costmap_->getPublisher()->publishCostmap();
         }
 
         {
@@ -190,7 +187,7 @@ void LocalPlannerInterface::doSomeMotionPlanning()
 
     // 2) Check if we are already there
     if (local_planner_->isGoalReached()) {
-        ROS_INFO("Local planner arrived at the goal position/orientation; clearing plan...");
+        ROS_INFO("LPI: Local planner arrived at the goal position/orientation; clearing plan...");
         action_server_->setSucceeded();
         goal_.plan.clear();
         return;
@@ -222,7 +219,7 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
         tf_->lookupTransform(costmap_->getGlobalFrameID(), goal_.orientation_constraint.frame, ros::Time(0), constraint_to_world_tf);
         feedback_.frame_exists = true;
     } catch(tf::TransformException& ex) {
-        ROS_ERROR("Failed to get robot orientation constraint frame");
+        ROS_ERROR("LPI: Failed to get robot orientation constraint frame");
         feedback_.frame_exists = false;
         return false;
     }

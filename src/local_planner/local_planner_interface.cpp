@@ -132,6 +132,10 @@ void LocalPlannerInterface::controllerThread()
         exit(1);
     }
 
+    // Wait untill the costmap is initialized
+    while (ros::ok() && !costmap_->getLayeredCostmap()->isInitialized())
+        ros::Rate(10).sleep();
+
     while (ros::ok())
     {
         tue::ScopedTimer timer(profiler, "total");

@@ -55,9 +55,9 @@ DWAPlannerROS:
     use_dwa: true
 
     # Switching behavior
-    swith_goal_distance: 0.5
-    swith_plan_distance: 0.5
-    swith_yaw_error: 1.6
+    switch_goal_distance: 0.3
+    switch_plan_distance: 0.5
+    switch_yaw_error: 1.6
 
     # Cost functions    
     align_align_scale: 1.0

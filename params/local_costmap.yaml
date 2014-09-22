@@ -74,8 +74,8 @@ free_space_inflation:
     use_footprint: false
     target_cell_value: 255
     dilation_cell_value: 170
-    dilation_radius: 0.7
-    inflation_radius: 0.7
+    dilation_radius: 1.1
+    inflation_radius: 1.1
 
 # Workspace to configuration space 
 configuration_space:

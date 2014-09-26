@@ -124,6 +124,7 @@ void LocalPlannerInterface::controllerThread()
     ros::Rate r(controller_frequency_);
 
     ROS_INFO_STREAM("LPI: Started local planner thread @ " << controller_frequency_ << " hz!");
+	costmap_->start();
 
     if (costmap_->getMapUpdateFrequency() > 0)
     {

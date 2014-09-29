@@ -117,6 +117,9 @@ void LocalPlannerInterface::actionServerPreempt()
 
 void LocalPlannerInterface::controllerThread()
 {
+	//TODO segfault at startup, quick fix
+	ros::Duration(5.0).sleep();
+
     tue::ProfilePublisher profile_pub;
     tue::Profiler profiler;
     profile_pub.initialize(profiler);
@@ -124,7 +127,6 @@ void LocalPlannerInterface::controllerThread()
     ros::Rate r(controller_frequency_);
 
     ROS_INFO_STREAM("LPI: Started local planner thread @ " << controller_frequency_ << " hz!");
-	costmap_->start();
 
     if (costmap_->getMapUpdateFrequency() > 0)
     {
@@ -144,8 +146,7 @@ void LocalPlannerInterface::controllerThread()
 
         {
             tue::ScopedTimer timer(profiler, "publishCostmap()");
-            if (costmap_->getLayeredCostmap()->isInitialized())
-                costmap_->getPublisher()->publishCostmap();
+            costmap_->getPublisher()->publishCostmap();
         }
 
         {

@@ -1,9 +1,6 @@
 <?xml version="1.0"?>
 
 <launch>
-    <arg name="env" default="$(optenv ROBOT_ENV robotics_testlab_B)" />
-
-    <include file="$(find amigo_launch_files)/launch/middleware/loc_odom.launch" />
 
     <include file="$(find cb_base_navigation)/launch/local_planner.launch" />
     <include file="$(find cb_base_navigation)/launch/global_planner.launch" />

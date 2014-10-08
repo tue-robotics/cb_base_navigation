@@ -14,7 +14,7 @@ from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 
 if len(sys.argv) < 3:
-    sys.exit('Usage: ./move \'frame\' \'constraint\'')
+    sys.exit('Usage: ./move \'frame\' \'constraint\' \'orientation_frame\' \'lookat_x\' \'lookat_y\' \'offset\'')
 
 frame = sys.argv[1]
 constraint = sys.argv[2]
@@ -42,7 +42,18 @@ if (len(resp.plan) == 0):
 
 # Push the plan to the local planner
 oc = OrientationConstraint()
-oc.frame = frame
+if len(sys.argv) > 3:
+    oc.frame = sys.argv[3]
+else:
+    oc.frame = frame
+
+if len(sys.argv) > 6:
+    oc.look_at.x = sys.argv[4]
+    oc.look_at.x = sys.argv[5]
+    oc.look_at.x = sys.argv[6]
+
+if len(sys.argv) > 7:
+    oc.angle_offset = sys.argv[7]
 
 goal = LocalPlannerActionGoal()
 goal.goal.plan = resp.plan

@@ -9,6 +9,7 @@
     <include file="$(find cb_base_navigation)/launch/global_planner.launch" />
 
     <include file="$(find head_ref)/launch/head_ref.launch" />
+    <node name="head_ref_ed_client" pkg="head_ref_ed_client" type="head_ref_ed_client" output="screen" />
 
     <node name="ed_server" pkg="ed" type="ed_server" output="screen" />
 

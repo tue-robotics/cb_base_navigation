@@ -44,6 +44,7 @@ ed_occupancy_grid:
     map_topic: /ed_map
     track_unknown_space: true
     use_maximum: true
+    lethal_cost_threshold: 99
 
 recent_obstacles:
     occupied_to_default_time: 2.0

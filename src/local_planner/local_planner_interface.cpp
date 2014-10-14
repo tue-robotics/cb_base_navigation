@@ -195,20 +195,19 @@ void LocalPlannerInterface::doSomeMotionPlanning()
         return;
     }
 
-    // 3) Check if we're not stuck (local minimum)
-    //! TODO
-
-    // 4) If we're not there and we're not stuck: compute and publish velocity commands to base
+    // 3) Compute and publish velocity commands to base, check if not blocked
     geometry_msgs::Twist tw;
-    local_planner_->computeVelocityCommands(tw);
+    bool blocked = !local_planner_->computeVelocityCommands(tw);
     vel_pub_.publish(tw);
 
-    // 5) Publish some feedback to via the action_server
+    // 4) Publish some feedback to via the action_server
     feedback_.dtg = 0.0; //! TODO: NY implemented
+    feedback_.blocked = blocked;
     action_server_->publishFeedback(feedback_);
 
-    // 6) Look in the heading direction
-    generateHeadReference(tw);
+    // 5) Look in the heading direction if not blocked
+    if (!blocked)
+        generateHeadReference(tw);
 }
 
 bool LocalPlannerInterface::updateEndGoalOrientation()

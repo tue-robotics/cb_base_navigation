@@ -16,7 +16,6 @@
 #include <cb_planner_msgs_srvs/LocalPlannerAction.h>
 #include "visualization.h"
 
-#include <head_ref/HeadReferenceAction.h>
 #include <actionlib/client/action_client.h>
 
 #include <tue/profiling/profiler.h>

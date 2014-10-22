@@ -21,7 +21,6 @@
   <build_depend>actionlib</build_depend>
   <build_depend>actionlib_msgs</build_depend>
   <build_depend>pcl_conversions</build_depend>
-  <build_depend>head_ref</build_depend>
   <build_depend>code_profiler</build_depend>
 
   <run_depend>cb_planner_msgs_srvs</run_depend>
@@ -35,7 +34,6 @@
   <run_depend>actionlib</run_depend>
   <run_depend>actionlib_msgs</run_depend>
   <run_depend>pcl_conversions</run_depend>
-  <run_depend>head_ref</run_depend>
   <run_depend>code_profiler</run_depend>
 
   <export>

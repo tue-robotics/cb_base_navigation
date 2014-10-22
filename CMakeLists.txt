@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   actionlib_msgs
   pcl_conversions
+  base_local_planner
   code_profiler
 )
 

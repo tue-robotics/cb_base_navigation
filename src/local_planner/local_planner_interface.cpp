@@ -4,6 +4,7 @@
 #include <tue/profiling/scoped_timer.h>
 
 #include <boost/thread.hpp>
+#include <base_local_planner/goal_functions.h>
 
 using namespace cb_planner_msgs_srvs;
 
@@ -174,11 +175,50 @@ void LocalPlannerInterface::controllerThread()
     }
 }
 
+void prunePlan(const tf::Stamped<tf::Pose>& global_pose, std::vector<geometry_msgs::PoseStamped>& plan){
+    std::vector<geometry_msgs::PoseStamped>::iterator it = plan.begin();
+    while(it != plan.end()){
+      const geometry_msgs::PoseStamped& w = *it;
+      // Fixed error bound of 2 meters for now. Can reduce to a portion of the map size or based on the resolution
+      double x_diff = global_pose.getOrigin().x() - w.pose.position.x;
+      double y_diff = global_pose.getOrigin().y() - w.pose.position.y;
+      double distance_sq = x_diff * x_diff + y_diff * y_diff;
+      if(distance_sq < .5){
+        it = plan.erase(it);
+        ROS_DEBUG("Nearest waypoint to <%f, %f> is <%f, %f>\n", global_pose.getOrigin().x(), global_pose.getOrigin().y(), w.pose.position.x, w.pose.position.y);
+        break;
+      }
+      it = plan.erase(it);
+    }
+  }
+
+double getDistance(const std::vector<geometry_msgs::PoseStamped>& plan)
+{
+    double distance = 0;
+    if (plan.size() > 1)
+        for (unsigned int i = 1; i < plan.size(); ++i)
+            distance+=hypot(plan[i].pose.position.x-plan[i-1].pose.position.x, plan[i].pose.position.y-plan[i-1].pose.position.y);
+    return distance;
+}
+
+geometry_msgs::Point getBlockedPoint(const std::vector<geometry_msgs::PoseStamped>& plan, costmap_2d::Costmap2D* costmap)
+{
+    for (std::vector<geometry_msgs::PoseStamped>::const_iterator it = plan.begin(); it != plan.end(); ++it)
+    {
+        unsigned int mx, my;
+        if (costmap->worldToMap(it->pose.position.x, it->pose.position.y, mx, my))
+        {
+            if (costmap->getCost(mx, my) >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
+                return it->pose.position;
+        }
+    }
+}
+
 void LocalPlannerInterface::doSomeMotionPlanning()
 {
     boost::unique_lock<boost::mutex> lock(goal_mtx_);
 
-    if (!isGoalSet()) return;
+    if (!isGoalSet() || !costmap_->getRobotPose(global_pose_)) return;
 
     // 1) Update the end goal orientation due to the orientation constraint, if updated, set new plan
     if (updateEndGoalOrientation())
@@ -194,12 +234,19 @@ void LocalPlannerInterface::doSomeMotionPlanning()
 
     // 3) Compute and publish velocity commands to base, check if not blocked
     geometry_msgs::Twist tw;
-    bool blocked = !local_planner_->computeVelocityCommands(tw);
+    feedback_.blocked = !local_planner_->computeVelocityCommands(tw);
     vel_pub_.publish(tw);
 
+    // 4) Get the pruned plan
+    std::vector<geometry_msgs::PoseStamped> pruned_plan = goal_.plan;
+    prunePlan(global_pose_, pruned_plan);
+
     // 4) Publish some feedback to via the action_server
-    feedback_.dtg = 0.0; //! TODO: NY implemented
-    feedback_.blocked = blocked;
+    feedback_.dtg = getDistance(pruned_plan);
+    if (feedback_.dtg < 1)
+        feedback_.dtg = base_local_planner::getGoalPositionDistance(global_pose_, pruned_plan.end()->pose.position.x, pruned_plan.end()->pose.position.y);
+    if (feedback_.blocked)
+        feedback_.point_blocked = getBlockedPoint(pruned_plan, costmap_->getCostmap());
     action_server_->publishFeedback(feedback_);
 }
 

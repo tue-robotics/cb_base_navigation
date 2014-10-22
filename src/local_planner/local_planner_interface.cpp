@@ -201,7 +201,7 @@ double getDistance(const std::vector<geometry_msgs::PoseStamped>& plan)
     return distance;
 }
 
-geometry_msgs::Point getBlockedPoint(const std::vector<geometry_msgs::PoseStamped>& plan, costmap_2d::Costmap2D* costmap)
+bool getBlockedPoint(const std::vector<geometry_msgs::PoseStamped>& plan, costmap_2d::Costmap2D* costmap, geometry_msgs::Point& p)
 {
     for (std::vector<geometry_msgs::PoseStamped>::const_iterator it = plan.begin(); it != plan.end(); ++it)
     {
@@ -209,9 +209,13 @@ geometry_msgs::Point getBlockedPoint(const std::vector<geometry_msgs::PoseStampe
         if (costmap->worldToMap(it->pose.position.x, it->pose.position.y, mx, my))
         {
             if (costmap->getCost(mx, my) >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
-                return it->pose.position;
+            {
+                p = it->pose.position;
+                return true;
+            }
         }
     }
+    return false;
 }
 
 void LocalPlannerInterface::doSomeMotionPlanning()
@@ -246,7 +250,7 @@ void LocalPlannerInterface::doSomeMotionPlanning()
     if (feedback_.dtg < 1)
         feedback_.dtg = base_local_planner::getGoalPositionDistance(global_pose_, pruned_plan.end()->pose.position.x, pruned_plan.end()->pose.position.y);
     if (feedback_.blocked)
-        feedback_.point_blocked = getBlockedPoint(pruned_plan, costmap_->getCostmap());
+        feedback_.blocked = getBlockedPoint(pruned_plan, costmap_->getCostmap(), feedback_.point_blocked);
     action_server_->publishFeedback(feedback_);
 }
 

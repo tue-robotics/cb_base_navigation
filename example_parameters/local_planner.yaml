@@ -1,5 +1,7 @@
 local_planner : dwa_local_planner/DWAPlannerROS
 controller_frequency: 10.0
+robot_base_frame: /amigo/base_link
+global_frame: /map
 
 # Specific local planner parameters
 DWAPlannerROS:

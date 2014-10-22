@@ -39,10 +39,6 @@ file(GLOB_RECURSE GLOBAL_PLANNER_SRC_FILES global_planner_plugins/*.cpp)
 add_library(global_planners ${GLOBAL_PLANNER_SRC_FILES})
 target_link_libraries(global_planners ${catkin_LIBRARIES})
 
-file(GLOB_RECURSE LOCAL_PLANNER_SRC_FILES local_planner_plugins/*.cpp)
-add_library(local_planners ${LOCAL_PLANNER_SRC_FILES})
-target_link_libraries(local_planners ${catkin_LIBRARIES})
-
 # get all the header files (for qtcreator)!
 file(GLOB_RECURSE HEADERS include/*.h)
 

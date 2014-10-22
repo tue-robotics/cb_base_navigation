@@ -40,6 +40,5 @@
 
   <export>
     <cb_base_navigation plugin="${prefix}/global_planner_plugins.xml"/>
-    <nav_core           plugin="${prefix}/local_planner_plugins.xml" />
   </export>
 </package>

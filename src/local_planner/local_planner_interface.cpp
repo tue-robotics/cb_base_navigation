@@ -15,7 +15,6 @@ LocalPlannerInterface::~LocalPlannerInterface()
     local_planner_.reset();
 
     delete tf_;
-    delete head_ref_ac_;
     delete action_server_;
 
     controller_thread_->interrupt();
@@ -27,17 +26,18 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap) 
     tf_(new tf::TransformListener(ros::Duration(10))),
     costmap_(costmap)
 {
+    ros::NodeHandle gh;
     ros::NodeHandle nh("~");
 
     // Parameter setup
     std::string local_planner;
-    nh.param("local_planner", local_planner, std::string("cb_local_planner/AmigoLocalPlanner"));
-    nh.param("robot_base_frame", robot_base_frame_, std::string("/amigo/base_link"));;
+    nh.param("local_planner", local_planner, std::string("dwa_local_planner/DWAPlannerROS"));
+    nh.param("robot_base_frame", robot_base_frame_, std::string("/base_link"));;
     nh.param("global_frame", global_frame_, std::string("/map"));
     nh.param("controller_frequency", controller_frequency_, 20.0);
 
     // ROS Publishers
-    vel_pub_ = nh.advertise<geometry_msgs::Twist>("/amigo/base/references", 1);
+    vel_pub_ = gh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
 
     // Initialize the local planner
     try {
@@ -63,11 +63,8 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap) 
     action_server_->registerPreemptCallback(boost::bind(&LocalPlannerInterface::actionServerPreempt, this));
     action_server_->start();
 
-    // Head reference
-    head_ref_ac_ = new actionlib::ActionClient<head_ref::HeadReferenceAction>("/HeadReference");
-
     // Topic sub
-    topic_sub_ = nh.subscribe("action_server/goal", 1, &LocalPlannerInterface::topicGoalCallback, this);
+    topic_sub_ = gh.subscribe("action_server/goal", 1, &LocalPlannerInterface::topicGoalCallback, this);
 
     ROS_INFO_STREAM("Local planner of type: '" << local_planner << "' initialized.");
 
@@ -204,10 +201,6 @@ void LocalPlannerInterface::doSomeMotionPlanning()
     feedback_.dtg = 0.0; //! TODO: NY implemented
     feedback_.blocked = blocked;
     action_server_->publishFeedback(feedback_);
-
-    // 5) Look in the heading direction if not blocked
-    if (!blocked)
-        generateHeadReference(tw);
 }
 
 bool LocalPlannerInterface::updateEndGoalOrientation()
@@ -260,49 +253,6 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
     }
 
     return false;
-}
-
-void LocalPlannerInterface::generateHeadReference(const geometry_msgs::Twist& cmd)
-{
-    // send a goal to the action
-    head_ref::HeadReferenceGoal goal;
-    goal.target_point.header.frame_id = costmap_->getBaseFrameID();
-    goal.target_point.header.stamp = ros::Time::now();
-
-    double dt = 3; //! TODO: Hardcoded values in this function
-    double x = dt * (cmd.linear.x * cos(cmd.angular.z) + cmd.linear.y * cos(PI/2 + cmd.angular.z));
-    double y = dt * (cmd.linear.x * sin(cmd.angular.z) + cmd.linear.y * sin(PI/2 + cmd.angular.z));
-
-    double th = atan2(y, x);
-
-    //! When only turning
-    if (cmd.linear.y*cmd.linear.y+cmd.linear.x*cmd.linear.x < 0.1*0.1)
-        if (cmd.angular.z > 0)
-            th = .2*PI;
-        else if (cmd.angular.z < 0)
-            th = -.2*PI;
-
-    //! Limit -.5*PI till .5*PI
-    th = std::max( -.5*PI , std::min (th, .5*PI) );
-
-    //! At least 1 m
-    double r = std::max(1.0 , y*y+x*x );
-
-    goal.target_point.point.x = cos(th) * r;
-    goal.target_point.point.y = sin(th) * r;
-    goal.target_point.point.z = 0;
-
-    goal.goal_type = head_ref::HeadReferenceGoal::LOOKAT;
-
-    goal.priority = 5;
-
-    goal.pan_vel = .2;
-    goal.tilt_vel = .2;
-
-    goal.end_time = ros::Time::now().toSec() + 1;
-
-    // Update the goal handle
-    head_ref_gh_ = head_ref_ac_->sendGoal(goal);
 }
 
 }

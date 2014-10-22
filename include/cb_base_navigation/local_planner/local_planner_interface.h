@@ -77,13 +77,6 @@ private:
     //! Visualization
     Visualization vis;
 
-    //! Head server
-    actionlib::ActionClient<head_ref::HeadReferenceAction>* head_ref_ac_;
-    actionlib::ActionClient<head_ref::HeadReferenceAction>::GoalHandle head_ref_gh_;
-    void generateHeadReference(const geometry_msgs::Twist& cmd);
-
-    ros::CallbackQueue cb_queue_;
-
 };
 
 }

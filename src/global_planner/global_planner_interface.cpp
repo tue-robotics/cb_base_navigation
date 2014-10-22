@@ -20,7 +20,7 @@ GlobalPlannerInterface::GlobalPlannerInterface(costmap_2d::Costmap2DROS& costmap
     // Parameter setup
     std::string global_planner;
     nh.param("global_planner", global_planner, std::string("cb_global_planner::AStarPlannerGPP"));
-    nh.param("robot_base_frame", robot_base_frame_, std::string("/amigo/base_link"));;
+    nh.param("robot_base_frame", robot_base_frame_, std::string("/base_link"));;
     nh.param("global_frame", global_frame_, std::string("/map"));
 
     // Initialize the global planner

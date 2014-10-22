@@ -1,8 +1,0 @@
-<class_libraries>
-  <library path="lib/liblocal_planners">
-    <class name="cb_local_planner/AmigoLocalPlanner" type="cb_local_planner::AmigoLocalPlanner" base_class_type="nav_core::BaseLocalPlanner">
-      <description>Amigo local planner (old planner Amigo).</description>
-    </class>
-  </library>
-</class_libraries>
-

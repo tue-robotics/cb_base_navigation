@@ -56,11 +56,12 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
 
     // Calculate the area in the map frame which meets the constraints
     std::vector<unsigned int> mx_goal, my_goal;
-    calculateMapConstraintArea(mx_goal,my_goal,goal_positions);
+    if (!calculateMapConstraintArea(mx_goal,my_goal,goal_positions))
+        return false;
 
     if(mx_goal.size() == 0) {
         ROS_ERROR("There is no goal which meets the given constraints. Planning will always fail to this goal constraint.");
-        return false;
+        return true;
     }
 
     // Initialize plan
@@ -73,34 +74,33 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
     // Try to find a plan
     planner_->plan(mx_goal, my_goal, mx_start, my_start, plan_xs, plan_ys);
 
-    if (plan_xs.empty()) {
+//    if (plan_xs.empty()) {
 
-        // Try best heuristics path from the other way around
-        unsigned int mx_start_new = mx_goal[mx_goal.size()/2]; // middlepoint of area
-        unsigned int my_start_new = my_goal[my_goal.size()/2]; // middlepoint of area
+//        // Try best heuristics path from the other way around
+//        unsigned int mx_start_new = mx_goal[mx_goal.size()/2]; // middlepoint of area
+//        unsigned int my_start_new = my_goal[my_goal.size()/2]; // middlepoint of area
 
-        mx_goal.clear(); mx_goal.push_back(mx_start);
-        my_goal.clear(); my_goal.push_back(my_start);
+//        mx_goal.clear(); mx_goal.push_back(mx_start);
+//        my_goal.clear(); my_goal.push_back(my_start);
 
-        planner_->plan(mx_goal, my_goal, mx_start_new, my_start_new, plan_xs, plan_ys,true);
+//        planner_->plan(mx_goal, my_goal, mx_start_new, my_start_new, plan_xs, plan_ys,true);
 
-        // Reverse the plan
-        std::reverse(plan_xs.begin(),plan_xs.end());
-        std::reverse(plan_ys.begin(),plan_ys.end());
+//        // Reverse the plan
+//        std::reverse(plan_xs.begin(),plan_xs.end());
+//        std::reverse(plan_ys.begin(),plan_ys.end());
 
-    }
+//    }
 
     // Convert plan to world coordinates
     planToWorld(plan_xs,plan_ys,plan);
 
     // If no plan was found, return false
     if (plan.empty()) {
-        ROS_ERROR("A* planner could not generate a plan, sorry :(");
-        return false;
+        ROS_ERROR("No connectivity to specified constraint found, sorry :(");
     } else {
         ROS_INFO("A* planner succesfully generated plan :)");
-        return true;
     }
+    return true;
 }
 
 bool AStarPlannerGPP::updateConstraintPositionsInConstraintFrame(PositionConstraint position_constraint)
@@ -144,7 +144,7 @@ bool AStarPlannerGPP::updateConstraintPositionsInConstraintFrame(PositionConstra
     return true;
 }
 
-void AStarPlannerGPP::calculateMapConstraintArea(std::vector<unsigned int>& mx, std::vector<unsigned int>& my, std::vector<tf::Point>& goal_positions)
+bool AStarPlannerGPP::calculateMapConstraintArea(std::vector<unsigned int>& mx, std::vector<unsigned int>& my, std::vector<tf::Point>& goal_positions)
 {
     ROS_INFO("Calculating map constraint area ...");
 
@@ -154,6 +154,7 @@ void AStarPlannerGPP::calculateMapConstraintArea(std::vector<unsigned int>& mx, 
         tf_->lookupTransform(global_costmap_ros_->getGlobalFrameID(), position_constraint_.frame, ros::Time(0), world_to_constraint_tf);
     } catch(tf::TransformException& ex) {
         ROS_ERROR_STREAM( "Transform error calculating constraint positions in global planner: " << ex.what());
+        return false;
     }
 
     // Loop over the positions in the constraint frame and convert these to map points

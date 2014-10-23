@@ -76,7 +76,7 @@ private:
 
     bool updateConstraintPositionsInConstraintFrame(PositionConstraint position_constraint);
     bool evaluateConstraint(const tf::Point& p);
-    void calculateMapConstraintArea(std::vector<unsigned int>& mx, std::vector<unsigned int>& my, std::vector<tf::Point>& goal_positions);
+    bool calculateMapConstraintArea(std::vector<unsigned int>& mx, std::vector<unsigned int>& my, std::vector<tf::Point>& goal_positions);
     void planToWorld(const std::vector<int>& plan_xs, const std::vector<int>& plan_ys, std::vector<geometry_msgs::PoseStamped>& plan);
 
     PositionConstraint position_constraint_;

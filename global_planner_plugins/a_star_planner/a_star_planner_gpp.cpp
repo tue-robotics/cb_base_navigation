@@ -167,7 +167,8 @@ bool AStarPlannerGPP::calculateMapConstraintArea(std::vector<unsigned int>& mx, 
 
             // Check whether this point is blocked by an obstacle
             unsigned char goal_cell_cost = global_costmap_ros_->getCostmap()->getCost(x, y);
-            if (goal_cell_cost == costmap_2d::INSCRIBED_INFLATED_OBSTACLE || goal_cell_cost == costmap_2d::LETHAL_OBSTACLE) {
+            //if (goal_cell_cost == costmap_2d::INSCRIBED_INFLATED_OBSTACLE || goal_cell_cost == costmap_2d::LETHAL_OBSTACLE) {
+            if (goal_cell_cost >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE) {
                 continue;
             }
 
@@ -219,7 +220,8 @@ bool AStarPlannerGPP::checkPlan(const std::vector<geometry_msgs::PoseStamped>& p
         if (global_costmap_ros_->getCostmap()->worldToMap(it->pose.position.x,it->pose.position.y,mx,my)) {
             cost = global_costmap_ros_->getCostmap()->getCost(mx, my);
 
-            if (cost == costmap_2d::INSCRIBED_INFLATED_OBSTACLE || cost == costmap_2d::LETHAL_OBSTACLE) { // This also has to be removed and replaced by a proper implementation
+            //if (cost == costmap_2d::INSCRIBED_INFLATED_OBSTACLE || cost == costmap_2d::LETHAL_OBSTACLE) { // This also has to be removed and replaced by a proper implementation
+            if (cost >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE) { // This also has to be removed and replaced by a proper implementation
                 return false;
             }
         }

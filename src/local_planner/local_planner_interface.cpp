@@ -203,17 +203,30 @@ double getDistance(const std::vector<geometry_msgs::PoseStamped>& plan)
 
 bool getBlockedPoint(const std::vector<geometry_msgs::PoseStamped>& plan, costmap_2d::Costmap2D* costmap, geometry_msgs::Point& p)
 {
+    unsigned char maxcost = 0;
+    unsigned int index = 0;
+    unsigned int maxindex = 0;
+
     for (std::vector<geometry_msgs::PoseStamped>::const_iterator it = plan.begin(); it != plan.end(); ++it)
     {
         unsigned int mx, my;
         if (costmap->worldToMap(it->pose.position.x, it->pose.position.y, mx, my))
         {
-            if (costmap->getCost(mx, my) >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
+            unsigned char cost = costmap->getCost(mx, my);
+            if (cost >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
             {
                 p = it->pose.position;
                 return true;
+            } else if (cost > maxcost) {
+                maxcost = cost;
+                maxindex = index;
             }
         }
+        ++index;
+    }
+    if (maxindex < plan.size()) {
+        p = plan[maxindex].pose.position;
+        return true;
     }
     return false;
 }
@@ -249,8 +262,15 @@ void LocalPlannerInterface::doSomeMotionPlanning()
     feedback_.dtg = getDistance(pruned_plan);
     if (feedback_.dtg < 1)
         feedback_.dtg = base_local_planner::getGoalPositionDistance(global_pose_, pruned_plan.end()->pose.position.x, pruned_plan.end()->pose.position.y);
-    if (feedback_.blocked)
+    if (feedback_.blocked) {
         feedback_.blocked = getBlockedPoint(pruned_plan, costmap_->getCostmap(), feedback_.point_blocked);
+        ////
+        if (!feedback_.blocked) {
+            ROS_WARN("Quasi blocked...");
+        }
+        ////
+    }
+
     action_server_->publishFeedback(feedback_);
 }
 

@@ -72,7 +72,9 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
 
         // Check cost
         double cost = cost = global_costmap_ros_->getCostmap()->getCost(mx_goal[i], my_goal[i]);
-        if (cost < costmap_2d::INSCRIBED_INFLATED_OBSTACLE/2) {
+        // ToDo: divided by four is magic number
+        // ToDo: more levels?
+        if (cost < costmap_2d::INSCRIBED_INFLATED_OBSTACLE/4) {
             mx_low.push_back(mx_goal[i]);
             my_low.push_back(my_goal[i]);
         } else {

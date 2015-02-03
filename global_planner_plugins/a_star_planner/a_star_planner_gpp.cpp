@@ -1,5 +1,6 @@
 #include <pluginlib/class_list_macros.h>
 #include "a_star_planner_gpp.h"
+#include "costmap_2d/cost_values.h"
 
 namespace cb_global_planner
 {
@@ -64,6 +65,22 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
         return true;
     }
 
+    // Divide goal area in two: with costs above and below a certain threshold
+    // This prevents the planner for planning unnecessarily close to obstacles
+    std::vector<unsigned int> mx_low, my_low, mx_high, my_high;
+    for (unsigned int i = 0; i < mx_goal.size(); i++) {
+
+        // Check cost
+        double cost = cost = global_costmap_ros_->getCostmap()->getCost(mx_goal[i], my_goal[i]);
+        if (cost < costmap_2d::INSCRIBED_INFLATED_OBSTACLE/2) {
+            mx_low.push_back(mx_goal[i]);
+            my_low.push_back(my_goal[i]);
+        } else {
+            mx_high.push_back(mx_goal[i]);
+            my_high.push_back(my_goal[i]);
+        }
+    }
+
     // Initialize plan
     std::vector<int> plan_xs, plan_ys;
 
@@ -71,8 +88,14 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
     planner_->resize(global_costmap_ros_->getCostmap()->getSizeInCellsX(), global_costmap_ros_->getCostmap()->getSizeInCellsY());
     planner_->setCostmap(global_costmap_ros_->getCostmap()->getCharMap());
 
-    // Try to find a plan
-    planner_->plan(mx_goal, my_goal, mx_start, my_start, plan_xs, plan_ys);
+    // Try to find a plan with low costs for the endgoal
+    //planner_->plan(mx_goal, my_goal, mx_start, my_start, plan_xs, plan_ys);
+    planner_->plan(mx_low, my_low, mx_start, my_start, plan_xs, plan_ys);
+
+    // If no plan, retry with the remaining goal poses
+    if (plan_xs.empty()) {
+        planner_->plan(mx_high, my_high, mx_start, my_start, plan_xs, plan_ys);
+    }
 
 //    if (plan_xs.empty()) {
 

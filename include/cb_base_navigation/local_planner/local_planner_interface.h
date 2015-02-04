@@ -51,6 +51,9 @@ private:
     //! topic goal cb
     void topicGoalCallback(const LocalPlannerActionGoalConstPtr &goal);
 
+    //! World model client
+    ros::ServiceClient ed_client_;
+
     //! Action Server stuff
     void actionServerSetPlan();
     void actionServerPreempt();

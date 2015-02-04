@@ -81,6 +81,12 @@ private:
 
     PositionConstraint position_constraint_;
     std::vector<tf::Point> goal_positions_in_constraint_frame_;
+
+    //! World model client
+    ros::ServiceClient ed_client_;
+
+    bool queryEntityPose(const std::string& id, tf::Transform& pose);
+
 };
 
 #endif

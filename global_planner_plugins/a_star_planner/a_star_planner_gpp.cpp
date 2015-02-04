@@ -2,11 +2,48 @@
 #include "a_star_planner_gpp.h"
 #include "costmap_2d/cost_values.h"
 
+#include <ed/SimpleQuery.h>
+
 namespace cb_global_planner
 {
 
 //register this planner as a BaseGlobalPlanner plugin
 PLUGINLIB_EXPORT_CLASS(cb_global_planner::AStarPlannerGPP, cb_global_planner::GlobalPlannerPlugin)
+
+// ----------------------------------------------------------------------------------------------------
+
+bool AStarPlannerGPP::queryEntityPose(const std::string& id, tf::Transform& pose)
+{
+    if (id == "map" || id == "/map")
+    {
+        pose = tf::Transform::getIdentity();
+        return true;
+    }
+
+    ed::SimpleQuery ed_query;
+    ed_query.request.id = id;
+
+    std::cout << "[A* Planner] Querying ed for entity '" << id << "'." << std::endl;
+
+    if (!ed_client_.call(ed_query))
+    {
+        ROS_ERROR_STREAM("[A* Planner] Failed to get pose for entity '" << id << "': ED could not be queried.");
+        return false;
+    }
+
+    if (ed_query.response.entities.empty())
+    {
+        ROS_ERROR_STREAM("[A* Planner] Failed to get pose for entity '" << id << "': ED returns 'no such entity'.");
+        return false;
+    }
+
+    const ed::EntityInfo& e_info = ed_query.response.entities.front();
+
+    tf::poseMsgToTF(e_info.pose, pose);
+    return true;
+}
+
+// ----------------------------------------------------------------------------------------------------
 
 AStarPlannerGPP::AStarPlannerGPP() : global_costmap_ros_(NULL),  planner_(NULL) {}
 
@@ -19,6 +56,9 @@ void AStarPlannerGPP::initialize(std::string name, tf::TransformListener* tf, co
     // Create AstarPlanner Object ( initialize with current costmap width and height )
     planner_ = new AStarPlanner(global_costmap_ros->getCostmap()->getSizeInCellsX(), global_costmap_ros->getCostmap()->getSizeInCellsY());
     initialized_ = true;
+
+    ros::NodeHandle nh;
+    ed_client_ = nh.serviceClient<ed::SimpleQuery>("/ed/simple_query");
 
     ROS_INFO("A* Global planner initialized.");
 }
@@ -136,13 +176,18 @@ bool AStarPlannerGPP::updateConstraintPositionsInConstraintFrame(PositionConstra
     goal_positions_in_constraint_frame_.clear();
 
     // Request the constraint frame transform from map
-    tf::StampedTransform constraint_to_world_tf;
-    try {
-        tf_->lookupTransform(position_constraint.frame, global_costmap_ros_->getGlobalFrameID(), ros::Time(0), constraint_to_world_tf);
-    } catch(tf::TransformException& ex) {
-        ROS_ERROR_STREAM( "Transform error calculating constraint positions in global planner: " << ex.what());
+    tf::Transform world_to_constraint_tf;
+    if (!queryEntityPose(position_constraint.frame, world_to_constraint_tf))
         return false;
-    }
+
+    tf::Transform constraint_to_world_tf = world_to_constraint_tf.inverse();
+
+//    try {
+//        tf_->lookupTransform(position_constraint.frame, global_costmap_ros_->getGlobalFrameID(), ros::Time(0), constraint_to_world_tf);
+//    } catch(tf::TransformException& ex) {
+//        ROS_ERROR_STREAM( "Transform error calculating constraint positions in global planner: " << ex.what());
+//        return false;
+//    }
 
     ConstraintEvaluator ce;
 
@@ -173,14 +218,17 @@ bool AStarPlannerGPP::calculateMapConstraintArea(std::vector<unsigned int>& mx, 
 {
     ROS_INFO("Calculating map constraint area ...");
 
-    // Request the constraint frame transform from world
+    // Request the constraint frame transform from map
     tf::StampedTransform world_to_constraint_tf;
-    try {
-        tf_->lookupTransform(global_costmap_ros_->getGlobalFrameID(), position_constraint_.frame, ros::Time(0), world_to_constraint_tf);
-    } catch(tf::TransformException& ex) {
-        ROS_ERROR_STREAM( "Transform error calculating constraint positions in global planner: " << ex.what());
+    if (!queryEntityPose(position_constraint_.frame, world_to_constraint_tf))
         return false;
-    }
+
+//    try {
+//        tf_->lookupTransform(global_costmap_ros_->getGlobalFrameID(), position_constraint_.frame, ros::Time(0), world_to_constraint_tf);
+//    } catch(tf::TransformException& ex) {
+//        ROS_ERROR_STREAM( "Transform error calculating constraint positions in global planner: " << ex.what());
+//        return false;
+//    }
 
     // Loop over the positions in the constraint frame and convert these to map points
     std::vector<tf::Point>::const_iterator it = goal_positions_in_constraint_frame_.begin();

@@ -6,6 +6,9 @@
 #include <boost/thread.hpp>
 #include <base_local_planner/goal_functions.h>
 
+// Querying world model (ED)
+#include <ed/SimpleQuery.h>
+
 using namespace cb_planner_msgs_srvs;
 
 namespace cb_local_planner {
@@ -71,6 +74,8 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap) 
 
     // Start the controller thread
     controller_thread_ = new boost::thread(boost::bind(&LocalPlannerInterface::controllerThread, this));
+
+    ed_client_ = nh.serviceClient<ed::SimpleQuery>("/ed/simple_query");
 }
 
 void LocalPlannerInterface::topicGoalCallback(const LocalPlannerActionGoalConstPtr& goal)
@@ -278,16 +283,50 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
 {
     if (!isGoalSet()) return false;
 
-    // Request the desired transform from constraint frame to map
-    tf::StampedTransform constraint_to_world_tf;
-    try {
-        tf_->lookupTransform(costmap_->getGlobalFrameID(), goal_.orientation_constraint.frame, ros::Time(0), constraint_to_world_tf);
-        feedback_.frame_exists = true;
-    } catch(tf::TransformException& ex) {
-        ROS_ERROR("LPI: Failed to get robot orientation constraint frame");
-        feedback_.frame_exists = false;
-        return false;
+    tf::Transform constraint_to_world_tf;
+
+    if (goal_.orientation_constraint.frame == "/map" || goal_.orientation_constraint.frame == "map")
+    {
+        constraint_to_world_tf = tf::Transform::getIdentity();
     }
+    else
+    {
+        ed::SimpleQuery ed_query;
+        ed_query.request.id = goal_.orientation_constraint.frame;
+
+        if (!ed_client_.call(ed_query))
+        {
+            ROS_ERROR("LPI: Failed to get robot orientation constraint frame: ED could not be queried.");
+            return false;
+        }
+
+        if (ed_query.response.entities.empty())
+        {
+            ROS_ERROR_STREAM("LPI: Failed to get robot orientation constraint frame: ED returns 'no such entity'. ("
+                             << goal_.orientation_constraint.frame << ").");
+            return false;
+        }
+
+        const ed::EntityInfo& e_info = ed_query.response.entities.front();
+
+        tf::Transform world_to_constraint_tf;
+        tf::poseMsgToTF(e_info.pose, world_to_constraint_tf);
+        constraint_to_world_tf = world_to_constraint_tf.inverse();
+    }
+
+
+
+
+//    // Request the desired transform from constraint frame to map
+//    tf::StampedTransform constraint_to_world_tf;
+//    try {
+//        tf_->lookupTransform(costmap_->getGlobalFrameID(), goal_.orientation_constraint.frame, ros::Time(0), constraint_to_world_tf);
+//        feedback_.frame_exists = true;
+//    } catch(tf::TransformException& ex) {
+//        ROS_ERROR("LPI: Failed to get robot orientation constraint frame");
+//        feedback_.frame_exists = false;
+//        return false;
+//    }
 
     // Get end and look at point
     tf::Point look_at, end_point;

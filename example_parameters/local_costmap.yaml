@@ -50,7 +50,7 @@ recent_obstacles:
     occupied_to_default_time: 2.0
     observation_sources: base_laser torso_laser top_kinect
     base_laser:  {data_type: LaserScan, sensor_frame: /amigo/base_laser, topic: /amigo/base_laser/scan, observation_persistence: 0.0, inf_is_valid: true, obstacle_range: 20.0, marking: true, clearing: false, ray_trace_range: 20.0}
-    torso_laser:  {data_type: LaserScan, sensor_frame: /amigo/torso_laser, topic: /amigo/torso_laser, observation_persistence: 0.0, inf_is_valid: true, obstacle_range: 20.0, marking: true, clearing: false, ray_trace_range: 20.0}
+    torso_laser:  {data_type: LaserScan, sensor_frame: /amigo/torso_laser, topic: /amigo/torso_laser/scan, observation_persistence: 0.0, inf_is_valid: true, obstacle_range: 20.0, marking: true, clearing: false, ray_trace_range: 20.0}
     top_kinect: {data_type: PointCloud2, sensor_frame: /amigo/top_kinect/openni_depth_optical_frame, topic: /amigo/top_kinect/depth_registered/points, observation_persistence: 0.0, expected_update_rate: 1.0, min_obstacle_height: 0.1, max_obstacle_height: 2, obstacle_range: 2.5}
 
 # Eliminate small occlusions by inflating the obstacles with a radius of obstacles that can popup from unknown space

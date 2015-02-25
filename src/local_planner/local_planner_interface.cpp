@@ -64,9 +64,6 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap) 
     action_server_->registerPreemptCallback(boost::bind(&LocalPlannerInterface::actionServerPreempt, this));
     action_server_->start();
 
-    // Topic sub
-    topic_sub_ = gh.subscribe("action_server/goal", 1, &LocalPlannerInterface::topicGoalCallback, this);
-
     ROS_INFO_STREAM("Local planner of type: '" << local_planner << "' initialized.");
 
     // Start the controller thread

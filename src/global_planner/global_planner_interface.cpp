@@ -16,6 +16,7 @@ GlobalPlannerInterface::GlobalPlannerInterface(costmap_2d::Costmap2DROS& costmap
     costmap_(costmap)
 {
     ros::NodeHandle nh("~");
+    ros::NodeHandle gh;
 
     // Parameter setup
     std::string global_planner;
@@ -47,7 +48,7 @@ GlobalPlannerInterface::GlobalPlannerInterface(costmap_2d::Costmap2DROS& costmap
 
     // Pose callback and plan pub
     pose_sub_ = nh.subscribe("/move_base_simple/goal", 1, &GlobalPlannerInterface::poseCallback, this);
-    plan_pub_ = nh.advertise<LocalPlannerActionGoal>("/cb_base_navigation/local_planner_interface/action_server/goal",1);
+    plan_pub_ = gh.advertise<LocalPlannerActionGoal>("local_planner/action_server/goal",1);
 
     ROS_INFO_STREAM("GPI: Subsribed to '" << pose_sub_.getTopic() << "' for simple pose callbacks and I will send the plans to '" << plan_pub_.getTopic() << "'.");
 }

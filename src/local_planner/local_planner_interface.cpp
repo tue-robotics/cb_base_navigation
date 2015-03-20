@@ -72,7 +72,7 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap) 
     // Start the controller thread
     controller_thread_ = new boost::thread(boost::bind(&LocalPlannerInterface::controllerThread, this));
 
-    ed_client_ = nh.serviceClient<ed::SimpleQuery>("/ed/simple_query");
+    ed_client_ = nh.serviceClient<ed::SimpleQuery>("ed/simple_query");
 }
 
 void LocalPlannerInterface::topicGoalCallback(const LocalPlannerActionGoalConstPtr& goal)

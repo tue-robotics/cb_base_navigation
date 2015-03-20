@@ -58,7 +58,7 @@ void AStarPlannerGPP::initialize(std::string name, tf::TransformListener* tf, co
     initialized_ = true;
 
     ros::NodeHandle nh;
-    ed_client_ = nh.serviceClient<ed::SimpleQuery>("/ed/simple_query");
+    ed_client_ = nh.serviceClient<ed::SimpleQuery>("ed/simple_query");
 
     ROS_INFO("A* Global planner initialized.");
 }
@@ -111,7 +111,7 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
     for (unsigned int i = 0; i < mx_goal.size(); i++) {
 
         // Check cost
-        double cost = cost = global_costmap_ros_->getCostmap()->getCost(mx_goal[i], my_goal[i]);
+        double cost = global_costmap_ros_->getCostmap()->getCost(mx_goal[i], my_goal[i]);
         // ToDo: divided by four is magic number
         // ToDo: more levels?
         if (cost < costmap_2d::INSCRIBED_INFLATED_OBSTACLE/4) {
@@ -249,6 +249,8 @@ bool AStarPlannerGPP::calculateMapConstraintArea(std::vector<unsigned int>& mx, 
             //ROS_INFO_STREAM("Pushing back in map point: " << x << ";" << y);
         }
     }
+
+    return true;
 }
 
 void AStarPlannerGPP::planToWorld(const std::vector<int>& plan_xs, const std::vector<int>& plan_ys, std::vector<geometry_msgs::PoseStamped>& plan)

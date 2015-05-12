@@ -107,14 +107,17 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
 
     // Divide goal area in two: with costs above and below a certain threshold
     // This prevents the planner for planning unnecessarily close to obstacles
-    std::vector<unsigned int> mx_low, my_low, mx_high, my_high;
+    std::vector<unsigned int> mx_free, my_free, mx_low, my_low, mx_high, my_high;
     for (unsigned int i = 0; i < mx_goal.size(); i++) {
 
         // Check cost
         double cost = global_costmap_ros_->getCostmap()->getCost(mx_goal[i], my_goal[i]);
         // ToDo: divided by four is magic number
         // ToDo: more levels?
-        if (cost < costmap_2d::INSCRIBED_INFLATED_OBSTACLE/4) {
+        if (cost == costmap_2d::FREE_SPACE) {
+            mx_free.push_back(mx_goal[i]);
+            my_free.push_back(my_goal[i]);
+        } else if (cost < costmap_2d::INSCRIBED_INFLATED_OBSTACLE/4) {
             mx_low.push_back(mx_goal[i]);
             my_low.push_back(my_goal[i]);
         } else {
@@ -130,11 +133,16 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
     planner_->resize(global_costmap_ros_->getCostmap()->getSizeInCellsX(), global_costmap_ros_->getCostmap()->getSizeInCellsY());
     planner_->setCostmap(global_costmap_ros_->getCostmap()->getCharMap());
 
-    // Try to find a plan with low costs for the endgoal
     //planner_->plan(mx_goal, my_goal, mx_start, my_start, plan_xs, plan_ys);
-    planner_->plan(mx_low, my_low, mx_start, my_start, plan_xs, plan_ys);
+    // Try to find a plan with the endgoal in free space
+    planner_->plan(mx_free, my_free, mx_start, my_start, plan_xs, plan_ys);
+    
+    // If no plan, retry with low costs
+    if (plan_xs.empty()) {
+        planner_->plan(mx_low, my_low, mx_start, my_start, plan_xs, plan_ys);
+    }
 
-    // If no plan, retry with the remaining goal poses
+    // If still no plan, retry with the remaining goal poses
     if (plan_xs.empty()) {
         planner_->plan(mx_high, my_high, mx_start, my_start, plan_xs, plan_ys);
     }

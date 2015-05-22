@@ -289,7 +289,7 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
 
         tf::Transform world_to_constraint_tf;
         tf::poseMsgToTF(e_info.pose, world_to_constraint_tf);
-        constraint_to_world_tf = world_to_constraint_tf.inverse();
+        constraint_to_world_tf = world_to_constraint_tf;
     }
 
 

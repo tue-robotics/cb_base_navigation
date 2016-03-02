@@ -82,6 +82,7 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
     unsigned int mx_start, my_start;
     if(!global_costmap_ros_->getCostmap()->worldToMap(start.getOrigin().getX(), start.getOrigin().getY(), mx_start, my_start)) {
         ROS_WARN("The robot's start position is off the global costmap. Planning will always fail, are you sure the robot has been properly localized?");
+        ROS_ERROR_STREAM("Received position constraint: " << position_constraint);
         return false;
     }
 
@@ -91,6 +92,7 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
             position_constraint_ = position_constraint;
         } else {
             ROS_WARN("Failed to update constraint positions in constraint frame.");
+            ROS_ERROR_STREAM("Received position constraint: " << position_constraint);
             return false;
         }
     }
@@ -98,11 +100,15 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
     // Calculate the area in the map frame which meets the constraints
     std::vector<unsigned int> mx_goal, my_goal;
     if (!calculateMapConstraintArea(mx_goal,my_goal,goal_positions))
+    {
+        ROS_ERROR_STREAM("Received position constraint: " << position_constraint);
         return false;
+    }
 
     if(mx_goal.size() == 0) {
         ROS_ERROR("There is no goal which meets the given constraints. Planning will always fail to this goal constraint.");
-        return true;
+        ROS_ERROR_STREAM("Received position constraint: " << position_constraint);
+        return false;
     }
 
     // Divide goal area in two: with costs above and below a certain threshold

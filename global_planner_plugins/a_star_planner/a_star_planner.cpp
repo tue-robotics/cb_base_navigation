@@ -34,7 +34,8 @@ double AStarPlanner::getCost(int x, int y) {
     unsigned char cost = char_cost_map_[k];
 
     if (cost == 255)
-        cost = 0;
+    //    cost = 0;
+        return DBL_MAX; // Do not plan through unknown space
 
     double cell_pass_through_time = DBL_MAX;
 

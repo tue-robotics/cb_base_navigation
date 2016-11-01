@@ -55,7 +55,7 @@ void Visualization::publishGlobalPlanMarkerArray(const std::vector<geometry_msgs
     m.type = visualization_msgs::Marker::ARROW;
 
     // Clear the markers
-    static int prev = 0;
+    static unsigned int prev = 0;
     m.action = visualization_msgs::Marker::DELETE;
     for (unsigned int i = 0; i < prev; ++i)
     {

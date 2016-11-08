@@ -233,6 +233,8 @@ void LocalPlannerInterface::doSomeMotionPlanning()
 
     // 2) Check if we are already there
     if (local_planner_->isGoalReached()) {
+        geometry_msgs::Twist tw;
+        vel_pub_.publish(tw);
         ROS_INFO("LPI: Local planner arrived at the goal position/orientation; clearing plan...");
         action_server_->setSucceeded();
         goal_.plan.clear();

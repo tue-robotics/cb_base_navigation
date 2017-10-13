@@ -7,7 +7,7 @@
 #include <base_local_planner/goal_functions.h>
 
 // Querying world model (ED)
-#include <ed/SimpleQuery.h>
+#include <ed_msgs/SimpleQuery.h>
 
 using namespace cb_planner_msgs_srvs;
 
@@ -73,7 +73,7 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap) 
     controller_thread_ = new boost::thread(boost::bind(&LocalPlannerInterface::controllerThread, this));
 
     ros::NodeHandle n;
-    ed_client_ = n.serviceClient<ed::SimpleQuery>("ed/simple_query");
+    ed_client_ = n.serviceClient<ed_msgs::SimpleQuery>("ed/simple_query");
 }
 
 void LocalPlannerInterface::topicGoalCallback(const LocalPlannerActionGoalConstPtr& goal)
@@ -271,7 +271,7 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
     }
     else
     {
-        ed::SimpleQuery ed_query;
+        ed_msgs::SimpleQuery ed_query;
         ed_query.request.id = goal_.orientation_constraint.frame;
 
         if (!ed_client_.call(ed_query))
@@ -287,7 +287,7 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
             return false;
         }
 
-        const ed::EntityInfo& e_info = ed_query.response.entities.front();
+        const ed_msgs::EntityInfo& e_info = ed_query.response.entities.front();
 
         tf::Transform world_to_constraint_tf;
         tf::poseMsgToTF(e_info.pose, world_to_constraint_tf);

@@ -2,7 +2,7 @@
 #include "a_star_planner_gpp.h"
 #include "costmap_2d/cost_values.h"
 
-#include <ed/SimpleQuery.h>
+#include <ed_msgs/SimpleQuery.h>
 
 namespace cb_global_planner
 {
@@ -20,7 +20,7 @@ bool AStarPlannerGPP::queryEntityPose(const std::string& id, tf::Transform& pose
         return true;
     }
 
-    ed::SimpleQuery ed_query;
+    ed_msgs::SimpleQuery ed_query;
     ed_query.request.id = id;
 
     std::cout << "[A* Planner] Querying ed for entity '" << id << "'." << std::endl;
@@ -37,7 +37,7 @@ bool AStarPlannerGPP::queryEntityPose(const std::string& id, tf::Transform& pose
         return false;
     }
 
-    const ed::EntityInfo& e_info = ed_query.response.entities.front();
+    const ed_msgs::EntityInfo& e_info = ed_query.response.entities.front();
 
     tf::poseMsgToTF(e_info.pose, pose);
     return true;
@@ -58,7 +58,7 @@ void AStarPlannerGPP::initialize(std::string name, tf::TransformListener* tf, co
     initialized_ = true;
 
     ros::NodeHandle nh;
-    ed_client_ = nh.serviceClient<ed::SimpleQuery>("ed/simple_query");
+    ed_client_ = nh.serviceClient<ed_msgs::SimpleQuery>("ed/simple_query");
 
     ROS_INFO("A* Global planner initialized.");
 }

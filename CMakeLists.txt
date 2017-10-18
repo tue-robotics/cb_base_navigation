@@ -16,7 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
   base_local_planner
   code_profiler
-  ed
+  ed_msgs
 )
 
 ###################################

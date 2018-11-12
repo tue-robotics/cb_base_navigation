@@ -20,7 +20,6 @@
   <build_depend>visualization_msgs</build_depend>
   <build_depend>actionlib</build_depend>
   <build_depend>actionlib_msgs</build_depend>
-  <build_depend>pcl_conversions</build_depend>
   <build_depend>code_profiler</build_depend>
   <build_depend>base_local_planner</build_depend>
   <build_depend>ed_msgs</build_depend>
@@ -35,7 +34,6 @@
   <run_depend>visualization_msgs</run_depend>
   <run_depend>actionlib</run_depend>
   <run_depend>actionlib_msgs</run_depend>
-  <run_depend>pcl_conversions</run_depend>
   <run_depend>code_profiler</run_depend>
   <run_depend>base_local_planner</run_depend>
   <run_depend>ed_msgs</run_depend>

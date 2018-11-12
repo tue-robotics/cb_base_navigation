@@ -13,7 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   actionlib
   actionlib_msgs
-  pcl_conversions
   base_local_planner
   code_profiler
   ed_msgs

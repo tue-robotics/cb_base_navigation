@@ -37,7 +37,7 @@ public:
 
 protected:
 
-	const static double SQRT2 = 1.414213562;
+	static constexpr double SQRT2 = 1.414213562;
 
 	static long N_OBJECTS;
 

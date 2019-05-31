@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cb_base_navigation)
 
+add_compile_options(-std=c++11)
+
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   cb_planner_msgs_srvs

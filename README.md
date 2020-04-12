@@ -19,8 +19,14 @@ Setup
 
 Example
 ==================
-```roslaunch cb_base_navigation local_planner.launch```
+```bash
+roslaunch cb_base_navigation local_planner.launch
+```
 
-```roslaunch cb_base_navigation global_planner.launch```
+```bash
+roslaunch cb_base_navigation global_planner.launch
+```
 
-```rosrun cb_base_navigation move '/person' 'x^2 + y^2 < r^2'```
+```bash
+rosrun cb_base_navigation move '/person' 'x^2 + y^2 < r^2'
+```

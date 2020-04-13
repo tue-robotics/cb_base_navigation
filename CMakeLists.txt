@@ -36,6 +36,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 # include_directories(include)
 include_directories(
   include
+  3rdparty
   ${catkin_INCLUDE_DIRS}
 )
 

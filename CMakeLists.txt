@@ -5,19 +5,19 @@ add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
-  cb_planner_msgs_srvs
+  actionlib
+  actionlib_msgs
+  base_local_planner
+  cb_base_navigation_msgs
+  code_profiler
   costmap_2d
+  ed_msgs
   geometry_msgs
   nav_core
   pluginlib
   roscpp
   tf
   visualization_msgs
-  actionlib
-  actionlib_msgs
-  base_local_planner
-  code_profiler
-  ed_msgs
 )
 
 ###################################
@@ -29,7 +29,7 @@ catkin_package()
 ## Build ##
 ###########
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+add_compile_options(-Wall)
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
@@ -58,3 +58,6 @@ add_executable(cb_base_navigation_global_planner_interface src/global_planner.cp
 
 target_link_libraries(cb_base_navigation_local_planner_interface ${catkin_LIBRARIES})
 target_link_libraries(cb_base_navigation_global_planner_interface ${catkin_LIBRARIES})
+
+add_dependencies(cb_base_navigation_local_planner_interface ${catkin_EXPORTED_TARGETS})
+add_dependencies(cb_base_navigation_global_planner_interface ${catkin_EXPORTED_TARGETS})

@@ -15,11 +15,11 @@
 #include "global_planner_plugin.h"
 
 //! Messages + Services
-#include <cb_planner_msgs_srvs/PositionConstraint.h>
-#include <cb_planner_msgs_srvs/OrientationConstraint.h>
-#include <cb_planner_msgs_srvs/LocalPlannerActionGoal.h>
-#include <cb_planner_msgs_srvs/CheckPlan.h>
-#include <cb_planner_msgs_srvs/GetPlan.h>
+#include <cb_base_navigation_msgs/PositionConstraint.h>
+#include <cb_base_navigation_msgs/OrientationConstraint.h>
+#include <cb_base_navigation_msgs/LocalPlannerActionGoal.h>
+#include <cb_base_navigation_msgs/CheckPlan.h>
+#include <cb_base_navigation_msgs/GetPlan.h>
 
 namespace cb_global_planner {
 

@@ -6,12 +6,10 @@ import tf
 import sys
 import actionlib
 
-roslib.load_manifest('cb_base_navigation')
-
 from math import cos, sin
 from geometry_msgs.msg import *
-from cb_planner_msgs_srvs.srv import *
-from cb_planner_msgs_srvs.msg import *
+from cb_base_navigation_msgs.srv import *
+from cb_base_navigation_msgs.msg import *
 
 if len(sys.argv) < 3:
     sys.exit('Usage: ./move \'frame\' \'constraint\' \'orientation_frame\' \'lookat_x\' \'lookat_y\' \'offset\'')
@@ -65,5 +63,5 @@ rospy.sleep(1) # Wait a second for the publisher initialization
 rospy.loginfo("Publishing plan on %s" % plan_pub.name)
 plan_pub.publish(goal)
 
-print "Plan and orientation constraint published to local planner :)"
+print("Plan and orientation constraint published to local planner :)")
 

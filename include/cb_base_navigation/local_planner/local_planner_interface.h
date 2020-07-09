@@ -13,7 +13,7 @@
 #include <nav_core/base_local_planner.h>
 #include <actionlib/server/simple_action_server.h>
 
-#include <cb_planner_msgs_srvs/LocalPlannerAction.h>
+#include <cb_base_navigation_msgs/LocalPlannerAction.h>
 #include "visualization.h"
 
 #include <actionlib/client/action_client.h>
@@ -22,7 +22,7 @@
 
 #define PI 3.14159265
 
-using namespace cb_planner_msgs_srvs;
+using namespace cb_base_navigation_msgs;
 
 namespace cb_local_planner {
 

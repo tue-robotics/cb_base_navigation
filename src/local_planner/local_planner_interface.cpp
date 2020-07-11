@@ -21,9 +21,7 @@ LocalPlannerInterface::~LocalPlannerInterface()
     // Clean things up
     local_planner_.reset();
 
-    delete action_server_;
-
-    controller_thread_->interrupt();
+    ros::shutdown();
     controller_thread_->join();
 }
 
@@ -66,7 +64,7 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap, 
     }
 
     // Construct action server
-    action_server_ = new actionlib::SimpleActionServer<LocalPlannerAction>(nh, "action_server", false);
+    action_server_ = std::unique_ptr<actionlib::SimpleActionServer<LocalPlannerAction> >(new actionlib::SimpleActionServer<LocalPlannerAction>(nh, "action_server", false));
     action_server_->registerGoalCallback(boost::bind(&LocalPlannerInterface::actionServerSetPlan, this));
     action_server_->registerPreemptCallback(boost::bind(&LocalPlannerInterface::actionServerPreempt, this));
     action_server_->start();
@@ -74,7 +72,7 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap, 
     ROS_INFO_STREAM("Local planner of type: '" << local_planner << "' initialized.");
 
     // Start the controller thread
-    controller_thread_ = new boost::thread(boost::bind(&LocalPlannerInterface::controllerThread, this));
+    controller_thread_ = std::unique_ptr<std::thread>(new std::thread(std::bind(&LocalPlannerInterface::controllerThread, this)));
 
     ros::NodeHandle n;
     ed_client_ = n.serviceClient<ed_msgs::SimpleQuery>("ed/simple_query");

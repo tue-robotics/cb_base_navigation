@@ -23,6 +23,9 @@
 
 #include <tf2/utils.h>
 
+#include <memory>
+#include <thread>
+
 namespace costmap_2d {
 class Costmap2DROS;
 }
@@ -48,7 +51,7 @@ public:
 private:
 
     boost::mutex goal_mtx_;
-    boost::thread* controller_thread_;
+    std::unique_ptr<std::thread> controller_thread_;
 
     void controllerThread();
     void doSomeMotionPlanning();
@@ -58,7 +61,7 @@ private:
     //! ROS Communication
     ros::Publisher vel_pub_;
     ros::Subscriber topic_sub_;
-    actionlib::SimpleActionServer<cb_base_navigation_msgs::LocalPlannerAction>* action_server_;
+    std::unique_ptr<actionlib::SimpleActionServer<cb_base_navigation_msgs::LocalPlannerAction> > action_server_;
 
     //! topic goal cb
     void topicGoalCallback(const cb_base_navigation_msgs::LocalPlannerActionGoalConstPtr &goal);

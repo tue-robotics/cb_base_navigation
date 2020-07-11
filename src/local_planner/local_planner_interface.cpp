@@ -82,7 +82,7 @@ void LocalPlannerInterface::topicGoalCallback(const LocalPlannerActionGoalConstP
 {
     boost::unique_lock<boost::mutex> lock(goal_mtx_); // goal is altered
 
-    ROS_INFO("Incoming topic plan.");
+    ROS_DEBUG("Incoming topic plan.");
 
     goal_ = goal->goal;
 
@@ -98,7 +98,7 @@ void LocalPlannerInterface::actionServerSetPlan()
 {
     boost::unique_lock<boost::mutex> lock(goal_mtx_); // goal is altered
 
-    ROS_INFO("Incoming actionlib plan.");
+    ROS_DEBUG("Incoming actionlib plan.");
 
     goal_ = *action_server_->acceptNewGoal();
 

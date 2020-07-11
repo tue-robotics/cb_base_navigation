@@ -28,17 +28,17 @@ bool AStarPlannerGPP::queryEntityPose(const std::string& id, tf2::Transform& pos
     ed_msgs::SimpleQuery ed_query;
     ed_query.request.id = id;
 
-    std::cout << "[A* Planner] Querying ed for entity '" << id << "'." << std::endl;
+    ROS_DEBUG_STREAM("[A* Planner] Querying ed for entity '" << id << "'");
 
     if (!ed_client_.call(ed_query))
     {
-        ROS_ERROR_STREAM("[A* Planner] Failed to get pose for entity '" << id << "': ED could not be queried.");
+        ROS_ERROR_STREAM("[A* Planner] Failed to get pose for entity '" << id << "': ED could not be queried");
         return false;
     }
 
     if (ed_query.response.entities.empty())
     {
-        ROS_ERROR_STREAM("[A* Planner] Failed to get pose for entity '" << id << "': ED returns 'no such entity'.");
+        ROS_ERROR_STREAM("[A* Planner] Failed to get pose for entity '" << id << "': ED returns 'no such entity'");
         return false;
     }
 
@@ -229,7 +229,7 @@ bool AStarPlannerGPP::updateConstraintPositionsInConstraintFrame(const cb_base_n
             pc = constraint_to_world_tf*pc;
 
             if(ce.evaluate(pc.x(),pc.y())) {
-                //ROS_INFO_STREAM("Pushing back in constraint frame point: " << pc.x() << " - " << pc.y());
+                ROS_DEBUG_STREAM("Pushing back in constraint frame point: (" << pc.x() << ", " << pc.y() << ")");
                 goal_positions_in_constraint_frame_.push_back(pc);
             }
         }
@@ -268,7 +268,7 @@ bool AStarPlannerGPP::calculateMapConstraintArea(std::vector<unsigned int>& mx, 
 
             goal_positions.push_back(pw);
             mx.push_back(x); my.push_back(y);
-            //ROS_INFO_STREAM("Pushing back in map point: " << x << ";" << y);
+            ROS_DEBUG_STREAM("Pushing back in map point: (" << x << ", " << y << ")");
         }
     }
 

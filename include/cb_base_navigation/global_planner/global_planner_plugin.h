@@ -10,9 +10,9 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <costmap_2d/costmap_2d_ros.h>
-#include <cb_planner_msgs_srvs/PositionConstraint.h>
+#include <cb_base_navigation_msgs/PositionConstraint.h>
 
-using namespace cb_planner_msgs_srvs;
+using namespace cb_base_navigation_msgs;
 
 namespace cb_global_planner {
   /**

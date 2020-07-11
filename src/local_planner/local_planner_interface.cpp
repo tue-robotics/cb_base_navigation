@@ -9,7 +9,7 @@
 // Querying world model (ED)
 #include <ed_msgs/SimpleQuery.h>
 
-using namespace cb_planner_msgs_srvs;
+using namespace cb_base_navigation_msgs;
 
 namespace cb_local_planner {
 

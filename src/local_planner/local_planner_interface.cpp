@@ -74,8 +74,7 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap, 
     // Start the controller thread
     controller_thread_ = std::unique_ptr<std::thread>(new std::thread(std::bind(&LocalPlannerInterface::controllerThread, this)));
 
-    ros::NodeHandle n;
-    ed_client_ = n.serviceClient<ed_msgs::SimpleQuery>("ed/simple_query");
+    ed_client_ = gh.serviceClient<ed_msgs::SimpleQuery>("ed/simple_query");
 }
 
 void LocalPlannerInterface::topicGoalCallback(const LocalPlannerActionGoalConstPtr& goal)

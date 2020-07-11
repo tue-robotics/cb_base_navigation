@@ -15,7 +15,8 @@ Visualization::Visualization()
     global_plan_marker_array_pub_ = nh.advertise<visualization_msgs::MarkerArray>("marker_arrays/global_plan", 1);
 }
 
-void Visualization::publishGlobalPlanMarker(const std::vector<geometry_msgs::PoseStamped>& plan, const std::string& frame) {
+void Visualization::publishGlobalPlanMarker(const std::vector<geometry_msgs::PoseStamped>& plan, const std::string& frame)
+{
     // General properties
     visualization_msgs::Marker line_strip;
     line_strip.scale.x = 0.05;
@@ -84,7 +85,7 @@ void Visualization::publishGlobalPlanMarkerArray(const std::vector<geometry_msgs
     global_plan_marker_array_pub_.publish(array);
 }
 
-void Visualization::publishGoalPositionsMarker(const std::vector<tf::Point>& positions, const std::string& frame)
+void Visualization::publishGoalPositionsMarker(const std::vector<tf2::Vector3>& positions, const std::string& frame)
 {
     // General properties
     visualization_msgs::Marker cube_list;
@@ -102,7 +103,7 @@ void Visualization::publishGoalPositionsMarker(const std::vector<tf::Point>& pos
     cube_list.action = visualization_msgs::Marker::ADD;
 
     // Push back all pnts
-    for (std::vector<tf::Point>::const_iterator it = positions.begin(); it != positions.end(); ++it)
+    for (std::vector<tf2::Vector3>::const_iterator it = positions.begin(); it != positions.end(); ++it)
     {
         geometry_msgs::Point p;
         p.x = it->x();

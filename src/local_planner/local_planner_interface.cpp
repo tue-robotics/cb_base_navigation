@@ -1,13 +1,16 @@
 #include "cb_base_navigation/local_planner/local_planner_interface.h"
 
-#include <tue/profiling/ros/profile_publisher.h>
-#include <tue/profiling/scoped_timer.h>
-
-#include <boost/thread.hpp>
 #include <base_local_planner/goal_functions.h>
 
-// Querying world model (ED)
 #include <ed_msgs/SimpleQuery.h>
+
+#include <nav_core/base_local_planner.h>
+
+#include <tf2/utils.h>
+
+#include <tue/profiling/ros/profile_publisher.h>
+#include <tue/profiling/profiler.h>
+#include <tue/profiling/scoped_timer.h>
 
 using namespace cb_base_navigation_msgs;
 
@@ -18,16 +21,17 @@ LocalPlannerInterface::~LocalPlannerInterface()
     // Clean things up
     local_planner_.reset();
 
-    delete tf_;
     delete action_server_;
 
     controller_thread_->interrupt();
     controller_thread_->join();
 }
 
-LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap) :
+LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap, tf2_ros::Buffer* tf) :
+    controller_thread_(nullptr),
+    action_server_(nullptr),
     lp_loader_("nav_core", "nav_core::BaseLocalPlanner"),
-    tf_(new tf::TransformListener(ros::Duration(10))),
+    tf_(tf),
     costmap_(costmap)
 {
     ros::NodeHandle gh;
@@ -36,8 +40,8 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap) 
     // Parameter setup
     std::string local_planner;
     nh.param("local_planner", local_planner, std::string("dwa_local_planner/DWAPlannerROS"));
-    nh.param("robot_base_frame", robot_base_frame_, std::string("/base_link"));;
-    nh.param("global_frame", global_frame_, std::string("/map"));
+    nh.param("robot_base_frame", robot_base_frame_, std::string("base_link"));;
+    nh.param("global_frame", global_frame_, std::string("map"));
     nh.param("controller_frequency", controller_frequency_, 20.0);
 
     // ROS Publishers
@@ -178,17 +182,17 @@ void LocalPlannerInterface::controllerThread()
     }
 }
 
-void prunePlan(const tf::Stamped<tf::Pose>& global_pose, std::vector<geometry_msgs::PoseStamped>& plan){
+void prunePlan(const geometry_msgs::PoseStamped& global_pose, std::vector<geometry_msgs::PoseStamped>& plan){
     std::vector<geometry_msgs::PoseStamped>::iterator it = plan.begin();
     while(it != plan.end()){
       const geometry_msgs::PoseStamped& w = *it;
       // Fixed error bound of 2 meters for now. Can reduce to a portion of the map size or based on the resolution
-      double x_diff = global_pose.getOrigin().x() - w.pose.position.x;
-      double y_diff = global_pose.getOrigin().y() - w.pose.position.y;
+      double x_diff = global_pose.pose.position.x - w.pose.position.x;
+      double y_diff = global_pose.pose.position.y - w.pose.position.y;
       double distance_sq = x_diff * x_diff + y_diff * y_diff;
       if(distance_sq < .5){
         it = plan.erase(it);
-        ROS_DEBUG("Nearest waypoint to <%f, %f> is <%f, %f>\n", global_pose.getOrigin().x(), global_pose.getOrigin().y(), w.pose.position.x, w.pose.position.y);
+        ROS_DEBUG("Nearest waypoint to <%f, %f> is <%f, %f>\n", global_pose.pose.position.x, global_pose.pose.position.y, w.pose.position.x, w.pose.position.y);
         break;
       }
       it = plan.erase(it);
@@ -265,11 +269,11 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
 {
     if (!isGoalSet()) return false;
 
-    tf::Transform constraint_to_world_tf;
+    tf2::Transform constraint_to_world_tf;
 
     if (goal_.orientation_constraint.frame == "/map" || goal_.orientation_constraint.frame == "map")
     {
-        constraint_to_world_tf = tf::Transform::getIdentity();
+        constraint_to_world_tf = tf2::Transform::getIdentity();
     }
     else
     {
@@ -291,8 +295,8 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
 
         const ed_msgs::EntityInfo& e_info = ed_query.response.entities.front();
 
-        tf::Transform world_to_constraint_tf;
-        tf::poseMsgToTF(e_info.pose, world_to_constraint_tf);
+        tf2::Transform world_to_constraint_tf;
+        tf2::fromMsg(e_info.pose, world_to_constraint_tf);
         constraint_to_world_tf = world_to_constraint_tf;
     }
 
@@ -308,32 +312,33 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
 //    }
 
     // Get end and look at point
-    tf::Point look_at, end_point;
-    tf::pointMsgToTF(goal_.orientation_constraint.look_at, look_at);
-    tf::pointMsgToTF(goal_.plan.back().pose.position, end_point);
+    tf2::Vector3 look_at, end_point;
+    tf2::fromMsg(goal_.orientation_constraint.look_at, look_at);
+    tf2::fromMsg(goal_.plan.back().pose.position, end_point);
 
     // Get difference
-    tf::Point diff = constraint_to_world_tf*look_at - end_point;
+    tf2::Vector3 diff = constraint_to_world_tf*look_at - end_point;
 
     // Calculate current and new orientation
     geometry_msgs::Quaternion& q = goal_.plan.back().pose.orientation;
-    tf::Quaternion new_quat = tf::createQuaternionFromYaw(atan2(diff.y(),diff.x()) + goal_.orientation_constraint.angle_offset);
+    tf2::Quaternion new_quat;
+    new_quat.setRPY(0, 0, atan2(diff.y(),diff.x()) + goal_.orientation_constraint.angle_offset);
 
     // Check if the end goal orientation is already set
     bool changed = (q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0);
 
     if (!changed)
     {
-        tf::Quaternion current_quat;
-        tf::quaternionMsgToTF(goal_.plan.back().pose.orientation, current_quat);
-        changed = abs(current_quat.dot(new_quat) < 1-1e-6);
+        tf2::Quaternion current_quat;
+        tf2::fromMsg(goal_.plan.back().pose.orientation, current_quat);
+        changed = abs(current_quat.dot(new_quat)) < 1-1e-6;
     }
 
     // Check if the orientation has changed
     if (changed)
     {
         // Set new orientation
-        tf::quaternionTFToMsg(new_quat, q);
+        q = tf2::toMsg(new_quat);
 
         // Visualize the end pose
         vis.publishGoalPoseMarker(goal_.plan.back());

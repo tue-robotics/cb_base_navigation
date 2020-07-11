@@ -7,6 +7,8 @@
 
 #include <ros/console.h>
 
+#include <tf2/utils.h>
+
 namespace cb_global_planner
 {
 
@@ -15,11 +17,11 @@ PLUGINLIB_EXPORT_CLASS(cb_global_planner::AStarPlannerGPP, cb_global_planner::Gl
 
 // ----------------------------------------------------------------------------------------------------
 
-bool AStarPlannerGPP::queryEntityPose(const std::string& id, tf::Transform& pose)
+bool AStarPlannerGPP::queryEntityPose(const std::string& id, tf2::Transform& pose)
 {
     if (id == "map" || id == "/map")
     {
-        pose = tf::Transform::getIdentity();
+        pose = tf2::Transform::getIdentity();
         return true;
     }
 
@@ -42,15 +44,17 @@ bool AStarPlannerGPP::queryEntityPose(const std::string& id, tf::Transform& pose
 
     const ed_msgs::EntityInfo& e_info = ed_query.response.entities.front();
 
-    tf::poseMsgToTF(e_info.pose, pose);
+    tf2::fromMsg(e_info.pose, pose);
     return true;
 }
 
 // ----------------------------------------------------------------------------------------------------
 
-AStarPlannerGPP::AStarPlannerGPP() : global_costmap_ros_(NULL),  planner_(NULL) {}
+AStarPlannerGPP::AStarPlannerGPP() : global_costmap_ros_(nullptr), planner_(nullptr), tf_(nullptr)
+{
+}
 
-void AStarPlannerGPP::initialize(std::string name, tf::TransformListener* tf, costmap_2d::Costmap2DROS* global_costmap_ros)
+void AStarPlannerGPP::initialize(std::string /*name*/, tf2_ros::Buffer* tf, costmap_2d::Costmap2DROS* global_costmap_ros)
 {
     // Store a local pointer to the global costmap and the tf_listener
     global_costmap_ros_ = global_costmap_ros;
@@ -70,7 +74,8 @@ AStarPlannerGPP::~AStarPlannerGPP()
 {
 }
 
-bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const PositionConstraint& position_constraint, std::vector<geometry_msgs::PoseStamped>& plan, std::vector<tf::Point>& goal_positions)
+bool AStarPlannerGPP::makePlan(const geometry_msgs::PoseStamped& start, const cb_base_navigation_msgs::PositionConstraint& pc, std::vector<geometry_msgs::PoseStamped>& plan,
+                               std::vector<tf2::Vector3>& goal_positions)
 {
     if (!initialized_) { ROS_WARN("The global planner is not initialized! It's not possible to create a global plan."); return false; }
 
@@ -79,22 +84,25 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
     goal_positions.clear();
 
     // If nothing specified, do nothing :)
-    if (position_constraint.frame == "" && position_constraint.constraint == "") return false;
+    if (pc.frame == "" && pc.constraint == "")
+        return false;
 
     unsigned int mx_start, my_start;
-    if(!global_costmap_ros_->getCostmap()->worldToMap(start.getOrigin().getX(), start.getOrigin().getY(), mx_start, my_start)) {
+    if(!global_costmap_ros_->getCostmap()->worldToMap(start.pose.position.x, start.pose.position.y, mx_start, my_start)) {
         ROS_WARN("The robot's start position is off the global costmap. Planning will always fail, are you sure the robot has been properly localized?");
-        ROS_ERROR_STREAM("Received position constraint: " << position_constraint);
+        ROS_ERROR_STREAM("Received position constraint: " << pc);
         return false;
     }
 
     // Check whether the constraint has been changed
-    if (constraintChanged(position_constraint)) {
-        if (updateConstraintPositionsInConstraintFrame(position_constraint)) {
-            position_constraint_ = position_constraint;
-        } else {
+    if (constraintChanged(pc))
+    {
+        if (updateConstraintPositionsInConstraintFrame(pc))
+            pc_ = pc;
+        else
+        {
             ROS_WARN("Failed to update constraint positions in constraint frame.");
-            ROS_ERROR_STREAM("Received position constraint: " << position_constraint);
+            ROS_ERROR_STREAM("Received position constraint: " << pc);
             return false;
         }
     }
@@ -103,13 +111,13 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
     std::vector<unsigned int> mx_goal, my_goal;
     if (!calculateMapConstraintArea(mx_goal, my_goal, goal_positions))
     {
-        ROS_ERROR_STREAM("Received position constraint: " << position_constraint);
+        ROS_ERROR_STREAM("Received position constraint: " << pc);
         return false;
     }
 
     if(mx_goal.size() == 0) {
         ROS_ERROR("There is no goal which meets the given constraints. Planning will always fail to this goal constraint.");
-        ROS_ERROR_STREAM("Received position constraint: " << position_constraint);
+        ROS_ERROR_STREAM("Received position constraint: " << pc);
         return false;
     }
 
@@ -183,7 +191,7 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
     return true;
 }
 
-bool AStarPlannerGPP::updateConstraintPositionsInConstraintFrame(PositionConstraint position_constraint)
+bool AStarPlannerGPP::updateConstraintPositionsInConstraintFrame(const cb_base_navigation_msgs::PositionConstraint& pc)
 {
     ROS_INFO("Position constraint has been changed, updating positions in constraint frame.");
 
@@ -191,14 +199,14 @@ bool AStarPlannerGPP::updateConstraintPositionsInConstraintFrame(PositionConstra
     goal_positions_in_constraint_frame_.clear();
 
     // Request the constraint frame transform from map
-    tf::Transform world_to_constraint_tf;
-    if (!queryEntityPose(position_constraint.frame, world_to_constraint_tf))
+    tf2::Transform world_to_constraint_tf;
+    if (!queryEntityPose(pc.frame, world_to_constraint_tf))
         return false;
 
-    tf::Transform constraint_to_world_tf = world_to_constraint_tf.inverse();
+    tf2::Transform constraint_to_world_tf = world_to_constraint_tf.inverse();
 
 //    try {
-//        tf_->lookupTransform(position_constraint.frame, global_costmap_ros_->getGlobalFrameID(), ros::Time(0), constraint_to_world_tf);
+//        tf_->lookupTransform(pc.frame, global_costmap_ros_->getGlobalFrameID(), ros::Time(0), constraint_to_world_tf);
 //    } catch(tf::TransformException& ex) {
 //        ROS_ERROR_STREAM( "Transform error calculating constraint positions in global planner: " << ex.what());
 //        return false;
@@ -206,7 +214,7 @@ bool AStarPlannerGPP::updateConstraintPositionsInConstraintFrame(PositionConstra
 
     ConstraintEvaluator ce;
 
-    if (!ce.init(position_constraint.constraint)) {
+    if (!ce.init(pc.constraint)) {
         ROS_ERROR("Could not setup goal constraints...");
         return false;
     }
@@ -217,8 +225,8 @@ bool AStarPlannerGPP::updateConstraintPositionsInConstraintFrame(PositionConstra
 
             double wx,wy;
             global_costmap_ros_->getCostmap()->mapToWorld(i,j,wx,wy);
-            tf::Point pw(wx,wy,0);
-            tf::Point pc = constraint_to_world_tf*pw;
+            tf2::Vector3 pc(wx,wy,0);
+            pc = constraint_to_world_tf*pc;
 
             if(ce.evaluate(pc.x(),pc.y())) {
                 //ROS_INFO_STREAM("Pushing back in constraint frame point: " << pc.x() << " - " << pc.y());
@@ -229,27 +237,26 @@ bool AStarPlannerGPP::updateConstraintPositionsInConstraintFrame(PositionConstra
     return true;
 }
 
-bool AStarPlannerGPP::calculateMapConstraintArea(std::vector<unsigned int>& mx, std::vector<unsigned int>& my, std::vector<tf::Point>& goal_positions)
+bool AStarPlannerGPP::calculateMapConstraintArea(std::vector<unsigned int>& mx, std::vector<unsigned int>& my, std::vector<tf2::Vector3>& goal_positions)
 {
-    ROS_INFO("Calculating map constraint area ...");
+    ROS_DEBUG("Calculating map constraint area");
 
     // Request the constraint frame transform from map
-    tf::StampedTransform world_to_constraint_tf;
-    if (!queryEntityPose(position_constraint_.frame, world_to_constraint_tf))
+    tf2::Stamped<tf2::Transform> world_to_constraint_tf;
+    if (!queryEntityPose(pc_.frame, world_to_constraint_tf))
         return false;
 
 //    try {
-//        tf_->lookupTransform(global_costmap_ros_->getGlobalFrameID(), position_constraint_.frame, ros::Time(0), world_to_constraint_tf);
+//        tf_->lookupTransform(global_costmap_ros_->getGlobalFrameID(), pc_.frame, ros::Time(0), world_to_constraint_tf);
 //    } catch(tf::TransformException& ex) {
 //        ROS_ERROR_STREAM( "Transform error calculating constraint positions in global planner: " << ex.what());
 //        return false;
 //    }
 
     // Loop over the positions in the constraint frame and convert these to map points
-    std::vector<tf::Point>::const_iterator it = goal_positions_in_constraint_frame_.begin();
-    for (; it != goal_positions_in_constraint_frame_.end(); ++it) {
-        tf::Point pw = world_to_constraint_tf * *it;
-        //ROS_INFO_STREAM("Pushing back in world frame point: " << pw.x() << " - " << pw.y());
+    for (std::vector<tf2::Vector3>::const_iterator it = goal_positions_in_constraint_frame_.begin(); it != goal_positions_in_constraint_frame_.end(); ++it)
+    {
+        tf2::Vector3 pw = world_to_constraint_tf * *it;
         unsigned int x,y;
         if (global_costmap_ros_->getCostmap()->worldToMap(pw.x(),pw.y(),x,y)) { // This should guarantee that we do not go off map, however the a* crashes sometimes
 
@@ -290,7 +297,9 @@ void AStarPlannerGPP::planToWorld(const std::vector<int>& plan_xs, const std::ve
         {
             global_costmap_ros_->getCostmap()->mapToWorld(plan_xs[i+size], plan_ys[i+size], world_x, world_y);
             double yaw = atan2(world_y - plan[i].pose.position.y, world_x - plan[i].pose.position.x);
-            plan[i].pose.orientation = tf::createQuaternionMsgFromYaw(yaw);
+            tf2::Quaternion quat_tf;
+            quat_tf.setRPY(0, 0, yaw);
+            plan[i].pose.orientation = tf2::toMsg(quat_tf);
         }
         else if (plan_xs.size() > size)
         {
@@ -303,8 +312,8 @@ bool AStarPlannerGPP::checkPlan(const std::vector<geometry_msgs::PoseStamped>& p
 {
     unsigned int mx,my;
     unsigned char cost;
-    std::vector<geometry_msgs::PoseStamped>::const_iterator it = plan.begin();
-    for(; it != plan.end(); ++it) {
+    for (std::vector<geometry_msgs::PoseStamped>::const_iterator it = plan.begin(); it != plan.end(); ++it)
+    {
         geometry_msgs::PoseStamped p;
         if (global_costmap_ros_->getCostmap()->worldToMap(it->pose.position.x,it->pose.position.y,mx,my)) {
             cost = global_costmap_ros_->getCostmap()->getCost(mx, my);

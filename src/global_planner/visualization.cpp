@@ -2,6 +2,8 @@
 
 #include <ros/node_handle.h>
 
+#include <tf2/utils.h>
+
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 
@@ -30,6 +32,8 @@ void Visualization::publishGlobalPlanMarker(const std::vector<geometry_msgs::Pos
     line_strip.type = visualization_msgs::Marker::LINE_STRIP;
     line_strip.action = visualization_msgs::Marker::ADD;
 
+    tf2::toMsg(tf2::Transform::getIdentity(), line_strip.pose);
+
     // Push back all pnts
     for (std::vector<geometry_msgs::PoseStamped>::const_iterator it = plan.begin(); it != plan.end(); ++it)
         line_strip.points.push_back(it->pose.position);
@@ -56,6 +60,8 @@ void Visualization::publishGlobalPlanMarkerArray(const std::vector<geometry_msgs
     m.color.b = 1;
     m.id = 0;
     m.type = visualization_msgs::Marker::ARROW;
+
+    tf2::toMsg(tf2::Transform::getIdentity(), m.pose);
 
     // Clear the markers
     static unsigned int prev = 0;
@@ -101,6 +107,8 @@ void Visualization::publishGoalPositionsMarker(const std::vector<tf2::Vector3>& 
     cube_list.id = 0;
     cube_list.type = visualization_msgs::Marker::CUBE_LIST;
     cube_list.action = visualization_msgs::Marker::ADD;
+
+    tf2::toMsg(tf2::Transform::getIdentity(), cube_list.pose);
 
     // Push back all pnts
     for (std::vector<tf2::Vector3>::const_iterator it = positions.begin(); it != positions.end(); ++it)

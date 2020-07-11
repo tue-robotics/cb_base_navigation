@@ -102,7 +102,7 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
 
     // Calculate the area in the map frame which meets the constraints
     std::vector<unsigned int> mx_goal, my_goal;
-    if (!calculateMapConstraintArea(mx_goal,my_goal,goal_positions))
+    if (!calculateMapConstraintArea(mx_goal, my_goal, goal_positions))
     {
         ROS_ERROR_STREAM("Received position constraint: " << position_constraint);
         return false;

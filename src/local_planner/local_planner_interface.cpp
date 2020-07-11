@@ -131,7 +131,7 @@ void LocalPlannerInterface::controllerThread()
 
     if (costmap_->getMapUpdateFrequency() > 0)
     {
-        ROS_ERROR("LPI: Local costmap map update frequency should be 0, it is now: %2f Hz. This is not allowed by the Local Planner Interface!",costmap_->getMapUpdateFrequency());
+        ROS_ERROR("LPI: Local costmap map update frequency should be 0, it is now: %2f Hz. This is not allowed by the Local Planner Interface!", costmap_->getMapUpdateFrequency());
         ROS_ERROR("LPI:     [[  Shutting down ...  ]]     ");
         exit(1);
     }

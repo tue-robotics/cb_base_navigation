@@ -170,7 +170,7 @@ bool AStarPlanner::plan(std::vector<unsigned int> mx_start, std::vector<unsigned
     for (std::list<CellInfo*>::iterator it = visited_cells.begin(); it != visited_cells.end(); ++it)
         delete *it;
 
-	return (goal_cell != 0);
+    return (goal_cell);
 }
 
 void AStarPlanner::expandCell(CellInfo* c, int dx, int dy, double cost_factor, double** visited_map,
@@ -202,8 +202,7 @@ void AStarPlanner::deleteMap() {
 	}
 
 	delete[] visited_map_;
-
-	visited_map_ = 0;
+    visited_map_ = nullptr;
 }
 
 }

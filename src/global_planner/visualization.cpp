@@ -1,5 +1,7 @@
 #include "cb_base_navigation/global_planner/visualization.h"
 
+#include <ros/node_handle.h>
+
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 

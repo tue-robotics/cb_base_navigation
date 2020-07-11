@@ -8,11 +8,8 @@
 #ifndef cb_global_planner_GLOBAL_PLANNER_INTERFACE_
 #define cb_global_planner_GLOBAL_PLANNER_INTERFACE_
 
-#include <geometry_msgs/PoseStamped.h>
-#include <costmap_2d/costmap_2d_ros.h>
-
-#include "visualization.h"
 #include "global_planner_plugin.h"
+#include "visualization.h"
 
 //! Messages + Services
 #include <cb_base_navigation_msgs/PositionConstraint.h>

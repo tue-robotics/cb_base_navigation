@@ -9,7 +9,8 @@
 #define cb_global_planner_CONSTRAINT_EVALUATOR_H_
 
 #include "exprtk/exprtk.hpp"
-#include <tf/transform_datatypes.h>
+
+#include <string>
 
 namespace cb_global_planner
 {

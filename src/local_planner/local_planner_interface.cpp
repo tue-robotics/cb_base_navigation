@@ -151,7 +151,7 @@ void LocalPlannerInterface::controllerThread()
         }
 
         {
-            tue::ScopedTimer timer(profiler, "publishCostmap()");
+            tue::ScopedTimer timer(profiler, "doSomeMotionPlanning()");
             doSomeMotionPlanning();
         }
 
@@ -199,8 +199,10 @@ double getDistance(const std::vector<geometry_msgs::PoseStamped>& plan)
 {
     double distance = 0;
     if (plan.size() > 1)
+    {
         for (unsigned int i = 1; i < plan.size(); ++i)
             distance+=hypot(plan[i].pose.position.x-plan[i-1].pose.position.x, plan[i].pose.position.y-plan[i-1].pose.position.y);
+    }
     return distance;
 }
 
@@ -293,9 +295,6 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
         tf::poseMsgToTF(e_info.pose, world_to_constraint_tf);
         constraint_to_world_tf = world_to_constraint_tf;
     }
-
-
-
 
 //    // Request the desired transform from constraint frame to map
 //    tf::StampedTransform constraint_to_world_tf;

@@ -1,8 +1,11 @@
-#include <pluginlib/class_list_macros.h>
 #include "a_star_planner_gpp.h"
+
+#include <pluginlib/class_list_macros.h>
 #include "costmap_2d/cost_values.h"
 
 #include <ed_msgs/SimpleQuery.h>
+
+#include <ros/console.h>
 
 namespace cb_global_planner
 {
@@ -167,7 +170,6 @@ bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const Positio
 //        // Reverse the plan
 //        std::reverse(plan_xs.begin(),plan_xs.end());
 //        std::reverse(plan_ys.begin(),plan_ys.end());
-
 //    }
 
     // Convert plan to world coordinates

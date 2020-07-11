@@ -1,5 +1,7 @@
 #include "a_star_planner.h"
 
+#include <costmap_2d/cost_values.h>
+
 using namespace std;
 
 namespace cb_global_planner {
@@ -33,13 +35,13 @@ double AStarPlanner::getCost(int x, int y) {
 
     unsigned char cost = char_cost_map_[k];
 
-    if (cost == 255)
+    if (cost == costmap_2d::NO_INFORMATION)
     //    cost = 0;
         return DBL_MAX; // Do not plan through unknown space
 
     double cell_pass_through_time = DBL_MAX;
 
-    if (cost != 253 && cost != 254)
+    if (cost != costmap_2d::INSCRIBED_INFLATED_OBSTACLE && cost != costmap_2d::LETHAL_OBSTACLE)
     {
         double max_vel = (1 - (double) cost / 256) * 1.0; //max_velocity_;
         cell_pass_through_time = 1 / max_vel; // cell_size

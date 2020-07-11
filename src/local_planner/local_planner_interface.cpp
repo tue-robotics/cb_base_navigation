@@ -119,9 +119,6 @@ void LocalPlannerInterface::actionServerPreempt()
 
 void LocalPlannerInterface::controllerThread()
 {
-	//TODO segfault at startup, quick fix
-	ros::Duration(5.0).sleep();
-
     tue::ProfilePublisher profile_pub;
     tue::Profiler profiler;
     profile_pub.initialize(profiler);

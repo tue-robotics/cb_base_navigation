@@ -2,8 +2,6 @@
 
 #include <costmap_2d/cost_values.h>
 
-using namespace std;
-
 namespace cb_global_planner {
 
 long AStarPlanner::N_OBJECTS = 0;
@@ -89,9 +87,9 @@ bool AStarPlanner::plan(std::vector<unsigned int> mx_start, std::vector<unsigned
 		}
 	}
 
-	priority_queue<CellInfo*, vector<CellInfo*>, compareCellInfos> Q;
+    std::priority_queue<CellInfo*, std::vector<CellInfo*>, compareCellInfos> Q;
 
-	list<CellInfo*> visited_cells;   // remember visited cells to be able to clear memory
+    std::list<CellInfo*> visited_cells;   // remember visited cells to be able to clear memory
 
     // add start points to priority queue and visited map
     for (unsigned int i = 0; i < mx_start.size(); ++i)
@@ -168,17 +166,17 @@ bool AStarPlanner::plan(std::vector<unsigned int> mx_start, std::vector<unsigned
         }
     }
 
-	// delete visted CellInfos
-	for(list<CellInfo*>::iterator it = visited_cells.begin(); it != visited_cells.end(); ++it) {
-		delete *it;
-	}
+    // delete visited CellInfos
+    for (std::list<CellInfo*>::iterator it = visited_cells.begin(); it != visited_cells.end(); ++it)
+        delete *it;
 
 	return (goal_cell != 0);
 }
 
 void AStarPlanner::expandCell(CellInfo* c, int dx, int dy, double cost_factor, double** visited_map,
-			int x_goal, int y_goal, double min_cell_cost,
-			priority_queue<CellInfo*, vector<CellInfo*>, compareCellInfos>& Q) {
+                              int x_goal, int y_goal, double min_cell_cost,
+                              std::priority_queue<CellInfo*, std::vector<CellInfo*>, compareCellInfos>& Q)
+{
 
 	int x = c->x_ + dx;
 	int y = c->y_ + dy;

@@ -15,13 +15,17 @@
 #include "cb_base_navigation/global_planner/constraint_evaluator.h"
 
 #include <costmap_2d/costmap_2d_ros.h>
+
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Point.h>
 
 #include <tf/transform_datatypes.h>
 
 #include <std_msgs/ColorRGBA.h>
+
 #include <visualization_msgs/Marker.h>
+
+#include <memory>
 
 namespace cb_global_planner {
 
@@ -68,7 +72,7 @@ public:
 private:
 
     costmap_2d::Costmap2DROS* global_costmap_ros_;
-	AStarPlanner* planner_;
+    std::unique_ptr<AStarPlanner> planner_;
     tf::TransformListener* tf_;
     bool initialized_;
 

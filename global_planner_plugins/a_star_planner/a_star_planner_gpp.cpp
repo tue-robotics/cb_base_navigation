@@ -57,7 +57,7 @@ void AStarPlannerGPP::initialize(std::string name, tf::TransformListener* tf, co
     tf_ = tf;
 
     // Create AstarPlanner Object ( initialize with current costmap width and height )
-    planner_ = new AStarPlanner(global_costmap_ros->getCostmap()->getSizeInCellsX(), global_costmap_ros->getCostmap()->getSizeInCellsY());
+    planner_ = std::unique_ptr<AStarPlanner>(new AStarPlanner(global_costmap_ros_->getCostmap()->getSizeInCellsX(), global_costmap_ros_->getCostmap()->getSizeInCellsY()));
     initialized_ = true;
 
     ros::NodeHandle nh;
@@ -68,7 +68,6 @@ void AStarPlannerGPP::initialize(std::string name, tf::TransformListener* tf, co
 
 AStarPlannerGPP::~AStarPlannerGPP()
 {
-    delete planner_;
 }
 
 bool AStarPlannerGPP::makePlan(const tf::Stamped<tf::Pose>& start, const PositionConstraint& position_constraint, std::vector<geometry_msgs::PoseStamped>& plan, std::vector<tf::Point>& goal_positions)

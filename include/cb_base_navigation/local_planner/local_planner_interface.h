@@ -8,21 +8,35 @@
 #ifndef cb_local_planner_LOCAL_PLANNER_INTERFACE_
 #define cb_local_planner_LOCAL_PLANNER_INTERFACE_
 
-#include <geometry_msgs/PoseStamped.h>
-#include <costmap_2d/costmap_2d_ros.h>
-#include <nav_core/base_local_planner.h>
-#include <actionlib/server/simple_action_server.h>
-
-#include <cb_base_navigation_msgs/LocalPlannerAction.h>
 #include "visualization.h"
 
 #include <actionlib/client/action_client.h>
+#include <actionlib/server/simple_action_server.h>
 
-#include <tue/profiling/profiler.h>
+#include <boost/shared_ptr.hpp>
 
-#define PI 3.14159265
+#include <cb_base_navigation_msgs/LocalPlannerAction.h>
 
-using namespace cb_base_navigation_msgs;
+#include <geometry_msgs/PoseStamped.h>
+
+#include <pluginlib/class_loader.h>
+
+#include <tf2/utils.h>
+
+#include <memory>
+#include <thread>
+
+namespace costmap_2d {
+class Costmap2DROS;
+}
+
+namespace nav_core {
+class BaseLocalPlanner;
+}
+
+namespace tf2_ros {
+class Buffer;
+}
 
 namespace cb_local_planner {
 
@@ -30,13 +44,14 @@ class LocalPlannerInterface {
 
 public:
 
-    LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap);
+    LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap, tf2_ros::Buffer* tf);
+
     ~LocalPlannerInterface();
 
 private:
 
     boost::mutex goal_mtx_;
-    boost::thread* controller_thread_;
+    std::unique_ptr<std::thread> controller_thread_;
 
     void controllerThread();
     void doSomeMotionPlanning();
@@ -46,10 +61,10 @@ private:
     //! ROS Communication
     ros::Publisher vel_pub_;
     ros::Subscriber topic_sub_;
-    actionlib::SimpleActionServer<LocalPlannerAction>* action_server_;
+    std::unique_ptr<actionlib::SimpleActionServer<cb_base_navigation_msgs::LocalPlannerAction> > action_server_;
 
     //! topic goal cb
-    void topicGoalCallback(const LocalPlannerActionGoalConstPtr &goal);
+    void topicGoalCallback(const cb_base_navigation_msgs::LocalPlannerActionGoalConstPtr &goal);
 
     //! World model client
     ros::ServiceClient ed_client_;
@@ -57,8 +72,8 @@ private:
     //! Action Server stuff
     void actionServerSetPlan();
     void actionServerPreempt();
-    LocalPlannerGoal goal_;
-    LocalPlannerFeedback feedback_;
+    cb_base_navigation_msgs::LocalPlannerGoal goal_;
+    cb_base_navigation_msgs::LocalPlannerFeedback feedback_;
 
     //! Planners + loaders
     boost::shared_ptr<nav_core::BaseLocalPlanner> local_planner_;
@@ -67,8 +82,8 @@ private:
 
     //! Frame names + Tranforms
     std::string robot_base_frame_, global_frame_;
-    tf::TransformListener* tf_;
-    tf::Stamped<tf::Pose> global_pose_;
+    tf2_ros::Buffer* tf_;
+    geometry_msgs::PoseStamped global_pose_;
 
     //! Costmaps
     costmap_2d::Costmap2DROS* costmap_;

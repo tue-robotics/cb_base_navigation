@@ -1,6 +1,6 @@
 #include "a_star_planner.h"
 
-using namespace std;
+#include <costmap_2d/cost_values.h>
 
 namespace cb_global_planner {
 
@@ -33,13 +33,13 @@ double AStarPlanner::getCost(int x, int y) {
 
     unsigned char cost = char_cost_map_[k];
 
-    if (cost == 255)
+    if (cost == costmap_2d::NO_INFORMATION)
     //    cost = 0;
         return DBL_MAX; // Do not plan through unknown space
 
     double cell_pass_through_time = DBL_MAX;
 
-    if (cost != 253 && cost != 254)
+    if (cost != costmap_2d::INSCRIBED_INFLATED_OBSTACLE && cost != costmap_2d::LETHAL_OBSTACLE)
     {
         double max_vel = (1 - (double) cost / 256) * 1.0; //max_velocity_;
         cell_pass_through_time = 1 / max_vel; // cell_size
@@ -87,9 +87,9 @@ bool AStarPlanner::plan(std::vector<unsigned int> mx_start, std::vector<unsigned
 		}
 	}
 
-	priority_queue<CellInfo*, vector<CellInfo*>, compareCellInfos> Q;
+    std::priority_queue<CellInfo*, std::vector<CellInfo*>, compareCellInfos> Q;
 
-	list<CellInfo*> visited_cells;   // remember visited cells to be able to clear memory
+    std::list<CellInfo*> visited_cells;   // remember visited cells to be able to clear memory
 
     // add start points to priority queue and visited map
     for (unsigned int i = 0; i < mx_start.size(); ++i)
@@ -166,17 +166,17 @@ bool AStarPlanner::plan(std::vector<unsigned int> mx_start, std::vector<unsigned
         }
     }
 
-	// delete visted CellInfos
-	for(list<CellInfo*>::iterator it = visited_cells.begin(); it != visited_cells.end(); ++it) {
-		delete *it;
-	}
+    // delete visited CellInfos
+    for (std::list<CellInfo*>::iterator it = visited_cells.begin(); it != visited_cells.end(); ++it)
+        delete *it;
 
-	return (goal_cell != 0);
+    return (goal_cell);
 }
 
 void AStarPlanner::expandCell(CellInfo* c, int dx, int dy, double cost_factor, double** visited_map,
-			int x_goal, int y_goal, double min_cell_cost,
-			priority_queue<CellInfo*, vector<CellInfo*>, compareCellInfos>& Q) {
+                              int x_goal, int y_goal, double min_cell_cost,
+                              std::priority_queue<CellInfo*, std::vector<CellInfo*>, compareCellInfos>& Q)
+{
 
 	int x = c->x_ + dx;
 	int y = c->y_ + dy;
@@ -202,8 +202,7 @@ void AStarPlanner::deleteMap() {
 	}
 
 	delete[] visited_map_;
-
-	visited_map_ = 0;
+    visited_map_ = nullptr;
 }
 
 }

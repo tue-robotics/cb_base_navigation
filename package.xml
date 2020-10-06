@@ -13,18 +13,19 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <depend>actionlib</depend>
+  <depend>base_local_planner</depend>
   <depend>cb_base_navigation_msgs</depend>
+  <depend>code_profiler</depend>
   <depend>costmap_2d</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_core</depend>
   <depend>pluginlib</depend>
   <depend>roscpp</depend>
-  <depend>tf</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
   <depend>visualization_msgs</depend>
-  <depend>actionlib</depend>
-  <depend>actionlib_msgs</depend>
-  <depend>code_profiler</depend>
-  <depend>base_local_planner</depend>
+
   <depend>ed_msgs</depend>
 
   <doc_depend>doxygen</doc_depend>

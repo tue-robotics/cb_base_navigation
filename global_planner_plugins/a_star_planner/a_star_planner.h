@@ -64,7 +64,7 @@ protected:
 		double h_;   // h = predicted extra cost
 		CellInfo* visited_from_; // pointer to cell from which this cell is visited
 
-		CellInfo(double x, double y, double g, double h) : x_(x), y_(y), g_(g), h_(h), visited_from_(0) {
+        CellInfo(double x, double y, double g, double h) : x_(x), y_(y), g_(g), h_(h), visited_from_(nullptr) {
 			f_ = g_ + h_;
 			++N_OBJECTS;
 		}
@@ -80,9 +80,9 @@ protected:
 	   }
 	};
 
-	void expandCell(CellInfo* c, int dx, int dy, double cost_factor, double** visited_map,
-			int x_goal, int y_goal, double min_cell_cost,
-			std::priority_queue<CellInfo*, std::vector<CellInfo*>, compareCellInfos>& Q);
+    void expandCell(CellInfo* c, int dx, int dy, double cost_factor, double** visited_map,
+                    int x_goal, int y_goal, double min_cell_cost,
+                    std::priority_queue<CellInfo*, std::vector<CellInfo*>, compareCellInfos>& Q);
 
 	double calculateHeuristicCost(int x, int y, int x_goal, int y_goal, double min_cell_cost);
 
@@ -90,4 +90,4 @@ protected:
 
 }
 
-#endif /* ASTARPLANNER_H_ */
+#endif /* cb_global_planner_ASTARPLANNER_H_ */

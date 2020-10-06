@@ -1,13 +1,16 @@
 #include "cb_base_navigation/local_planner/local_planner_interface.h"
 
-#include <tue/profiling/ros/profile_publisher.h>
-#include <tue/profiling/scoped_timer.h>
-
-#include <boost/thread.hpp>
 #include <base_local_planner/goal_functions.h>
 
-// Querying world model (ED)
 #include <ed_msgs/SimpleQuery.h>
+
+#include <nav_core/base_local_planner.h>
+
+#include <tf2/utils.h>
+
+#include <tue/profiling/ros/profile_publisher.h>
+#include <tue/profiling/profiler.h>
+#include <tue/profiling/scoped_timer.h>
 
 using namespace cb_base_navigation_msgs;
 
@@ -18,16 +21,15 @@ LocalPlannerInterface::~LocalPlannerInterface()
     // Clean things up
     local_planner_.reset();
 
-    delete tf_;
-    delete action_server_;
-
-    controller_thread_->interrupt();
+    ros::shutdown();
     controller_thread_->join();
 }
 
-LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap) :
+LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap, tf2_ros::Buffer* tf) :
+    controller_thread_(nullptr),
+    action_server_(nullptr),
     lp_loader_("nav_core", "nav_core::BaseLocalPlanner"),
-    tf_(new tf::TransformListener(ros::Duration(10))),
+    tf_(tf),
     costmap_(costmap)
 {
     ros::NodeHandle gh;
@@ -36,8 +38,8 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap) 
     // Parameter setup
     std::string local_planner;
     nh.param("local_planner", local_planner, std::string("dwa_local_planner/DWAPlannerROS"));
-    nh.param("robot_base_frame", robot_base_frame_, std::string("/base_link"));;
-    nh.param("global_frame", global_frame_, std::string("/map"));
+    nh.param("robot_base_frame", robot_base_frame_, std::string("base_link"));;
+    nh.param("global_frame", global_frame_, std::string("map"));
     nh.param("controller_frequency", controller_frequency_, 20.0);
 
     // ROS Publishers
@@ -62,7 +64,7 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap) 
     }
 
     // Construct action server
-    action_server_ = new actionlib::SimpleActionServer<LocalPlannerAction>(nh, "action_server", false);
+    action_server_ = std::unique_ptr<actionlib::SimpleActionServer<LocalPlannerAction> >(new actionlib::SimpleActionServer<LocalPlannerAction>(nh, "action_server", false));
     action_server_->registerGoalCallback(boost::bind(&LocalPlannerInterface::actionServerSetPlan, this));
     action_server_->registerPreemptCallback(boost::bind(&LocalPlannerInterface::actionServerPreempt, this));
     action_server_->start();
@@ -70,17 +72,16 @@ LocalPlannerInterface::LocalPlannerInterface(costmap_2d::Costmap2DROS* costmap) 
     ROS_INFO_STREAM("Local planner of type: '" << local_planner << "' initialized.");
 
     // Start the controller thread
-    controller_thread_ = new boost::thread(boost::bind(&LocalPlannerInterface::controllerThread, this));
+    controller_thread_ = std::unique_ptr<std::thread>(new std::thread(std::bind(&LocalPlannerInterface::controllerThread, this)));
 
-    ros::NodeHandle n;
-    ed_client_ = n.serviceClient<ed_msgs::SimpleQuery>("ed/simple_query");
+    ed_client_ = gh.serviceClient<ed_msgs::SimpleQuery>("ed/simple_query");
 }
 
 void LocalPlannerInterface::topicGoalCallback(const LocalPlannerActionGoalConstPtr& goal)
 {
     boost::unique_lock<boost::mutex> lock(goal_mtx_); // goal is altered
 
-    ROS_INFO("Incoming topic plan.");
+    ROS_DEBUG("Incoming topic plan.");
 
     goal_ = goal->goal;
 
@@ -96,7 +97,7 @@ void LocalPlannerInterface::actionServerSetPlan()
 {
     boost::unique_lock<boost::mutex> lock(goal_mtx_); // goal is altered
 
-    ROS_INFO("Incoming actionlib plan.");
+    ROS_DEBUG("Incoming actionlib plan.");
 
     goal_ = *action_server_->acceptNewGoal();
 
@@ -118,9 +119,6 @@ void LocalPlannerInterface::actionServerPreempt()
 
 void LocalPlannerInterface::controllerThread()
 {
-	//TODO segfault at startup, quick fix
-	ros::Duration(5.0).sleep();
-
     tue::ProfilePublisher profile_pub;
     tue::Profiler profiler;
     profile_pub.initialize(profiler);
@@ -131,7 +129,7 @@ void LocalPlannerInterface::controllerThread()
 
     if (costmap_->getMapUpdateFrequency() > 0)
     {
-        ROS_ERROR("LPI: Local costmap map update frequency should be 0, it is now: %2f Hz. This is not allowed by the Local Planner Interface!",costmap_->getMapUpdateFrequency());
+        ROS_ERROR("LPI: Local costmap map update frequency should be 0, it is now: %2f Hz. This is not allowed by the Local Planner Interface!", costmap_->getMapUpdateFrequency());
         ROS_ERROR("LPI:     [[  Shutting down ...  ]]     ");
         exit(1);
     }
@@ -151,7 +149,7 @@ void LocalPlannerInterface::controllerThread()
         }
 
         {
-            tue::ScopedTimer timer(profiler, "publishCostmap()");
+            tue::ScopedTimer timer(profiler, "doSomeMotionPlanning()");
             doSomeMotionPlanning();
         }
 
@@ -178,17 +176,17 @@ void LocalPlannerInterface::controllerThread()
     }
 }
 
-void prunePlan(const tf::Stamped<tf::Pose>& global_pose, std::vector<geometry_msgs::PoseStamped>& plan){
+void prunePlan(const geometry_msgs::PoseStamped& global_pose, std::vector<geometry_msgs::PoseStamped>& plan){
     std::vector<geometry_msgs::PoseStamped>::iterator it = plan.begin();
     while(it != plan.end()){
       const geometry_msgs::PoseStamped& w = *it;
       // Fixed error bound of 2 meters for now. Can reduce to a portion of the map size or based on the resolution
-      double x_diff = global_pose.getOrigin().x() - w.pose.position.x;
-      double y_diff = global_pose.getOrigin().y() - w.pose.position.y;
+      double x_diff = global_pose.pose.position.x - w.pose.position.x;
+      double y_diff = global_pose.pose.position.y - w.pose.position.y;
       double distance_sq = x_diff * x_diff + y_diff * y_diff;
       if(distance_sq < .5){
         it = plan.erase(it);
-        ROS_DEBUG("Nearest waypoint to <%f, %f> is <%f, %f>\n", global_pose.getOrigin().x(), global_pose.getOrigin().y(), w.pose.position.x, w.pose.position.y);
+        ROS_DEBUG("Nearest waypoint to <%f, %f> is <%f, %f>\n", global_pose.pose.position.x, global_pose.pose.position.y, w.pose.position.x, w.pose.position.y);
         break;
       }
       it = plan.erase(it);
@@ -199,8 +197,10 @@ double getDistance(const std::vector<geometry_msgs::PoseStamped>& plan)
 {
     double distance = 0;
     if (plan.size() > 1)
+    {
         for (unsigned int i = 1; i < plan.size(); ++i)
             distance+=hypot(plan[i].pose.position.x-plan[i-1].pose.position.x, plan[i].pose.position.y-plan[i-1].pose.position.y);
+    }
     return distance;
 }
 
@@ -263,11 +263,11 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
 {
     if (!isGoalSet()) return false;
 
-    tf::Transform constraint_to_world_tf;
+    tf2::Transform constraint_to_world_tf;
 
     if (goal_.orientation_constraint.frame == "/map" || goal_.orientation_constraint.frame == "map")
     {
-        constraint_to_world_tf = tf::Transform::getIdentity();
+        constraint_to_world_tf = tf2::Transform::getIdentity();
     }
     else
     {
@@ -289,13 +289,10 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
 
         const ed_msgs::EntityInfo& e_info = ed_query.response.entities.front();
 
-        tf::Transform world_to_constraint_tf;
-        tf::poseMsgToTF(e_info.pose, world_to_constraint_tf);
+        tf2::Transform world_to_constraint_tf;
+        tf2::fromMsg(e_info.pose, world_to_constraint_tf);
         constraint_to_world_tf = world_to_constraint_tf;
     }
-
-
-
 
 //    // Request the desired transform from constraint frame to map
 //    tf::StampedTransform constraint_to_world_tf;
@@ -309,32 +306,33 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
 //    }
 
     // Get end and look at point
-    tf::Point look_at, end_point;
-    tf::pointMsgToTF(goal_.orientation_constraint.look_at, look_at);
-    tf::pointMsgToTF(goal_.plan.back().pose.position, end_point);
+    tf2::Vector3 look_at, end_point;
+    tf2::fromMsg(goal_.orientation_constraint.look_at, look_at);
+    tf2::fromMsg(goal_.plan.back().pose.position, end_point);
 
     // Get difference
-    tf::Point diff = constraint_to_world_tf*look_at - end_point;
+    tf2::Vector3 diff = constraint_to_world_tf*look_at - end_point;
 
     // Calculate current and new orientation
     geometry_msgs::Quaternion& q = goal_.plan.back().pose.orientation;
-    tf::Quaternion new_quat = tf::createQuaternionFromYaw(atan2(diff.y(),diff.x()) + goal_.orientation_constraint.angle_offset);
+    tf2::Quaternion new_quat;
+    new_quat.setRPY(0, 0, atan2(diff.y(),diff.x()) + goal_.orientation_constraint.angle_offset);
 
     // Check if the end goal orientation is already set
     bool changed = (q.x == 0 && q.y == 0 && q.z == 0 && q.w == 0);
 
     if (!changed)
     {
-        tf::Quaternion current_quat;
-        tf::quaternionMsgToTF(goal_.plan.back().pose.orientation, current_quat);
-        changed = abs(current_quat.dot(new_quat) < 1-1e-6);
+        tf2::Quaternion current_quat;
+        tf2::fromMsg(goal_.plan.back().pose.orientation, current_quat);
+        changed = abs(current_quat.dot(new_quat)) < 1-1e-6;
     }
 
     // Check if the orientation has changed
     if (changed)
     {
         // Set new orientation
-        tf::quaternionTFToMsg(new_quat, q);
+        q = tf2::toMsg(new_quat);
 
         // Visualize the end pose
         vis.publishGoalPoseMarker(goal_.plan.back());

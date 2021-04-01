@@ -1,7 +1,7 @@
 local_planner : dwa_local_planner/DWAPlannerROS
 controller_frequency: 10.0
-robot_base_frame: /amigo/base_link
-global_frame: /map
+robot_base_frame: amigo/base_link
+global_frame: map
 
 # Specific local planner parameters
 DWAPlannerROS:
@@ -14,10 +14,10 @@ DWAPlannerROS:
 
     max_vel_x: 0.7
     min_vel_x: -0.1
-   
+
     max_vel_y: 0.2
     min_vel_y: -0.2
-    
+
     max_rot_vel: 1.0
     min_rot_vel: 0.1
 
@@ -61,7 +61,7 @@ DWAPlannerROS:
     switch_plan_distance: 0.5
     switch_yaw_error: 1.6
 
-    # Cost functions    
+    # Cost functions
     align_align_scale: 1.0
     align_plan_scale: 1.0
     align_goal_scale: 0.0

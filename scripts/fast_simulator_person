@@ -7,7 +7,7 @@ import sys, select, termios, tty
 import tf
 
 from fast_simulator import client
-import subprocess 
+import subprocess
 
 def getKey():
     tty.setraw(sys.stdin.fileno())
@@ -37,10 +37,10 @@ if __name__ == "__main__":
         if (rospy.Time.now() - t_last).secs > 1:
             subprocess.Popen(["rosrun", "cb_base_navigation", "move", "/operator", "x^2+y^2<1^2"])
             t_last = rospy.Time.now()
-            
+
         op.set_position(op_x, op_y, 0)
         br = tf.TransformBroadcaster()
-        br.sendTransform((op_x, op_y, 0),tf.transformations.quaternion_from_euler(0, 0, 0),rospy.Time.now(),"/operator","/map")
+        br.sendTransform((op_x, op_y, 0), tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "operator", "map")
 
         key = getKey()
         if key == '8':
@@ -57,4 +57,4 @@ if __name__ == "__main__":
             break
 
 
-        
+

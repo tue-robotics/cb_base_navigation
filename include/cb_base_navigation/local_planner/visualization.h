@@ -34,7 +34,7 @@ public:
      * @param  goal goal position and orientation
      * @param  frame coordinate frame
      */
-    void publishGoalPoseMarker(const geometry_msgs::PoseStamped& goal, const std::string& frame = "/map");
+    void publishGoalPoseMarker(const geometry_msgs::PoseStamped& goal, const std::string& frame = "map");
 
 private:
     ros::Publisher goal_pose_marker_pub_;

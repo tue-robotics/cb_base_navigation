@@ -61,6 +61,13 @@ void GlobalPlannerInterface::poseCallback(const geometry_msgs::PoseStampedConstP
     cb_base_navigation_msgs::GetPlanRequest req;
     cb_base_navigation_msgs::GetPlanResponse resp;
 
+    // Get if the robot pose is available
+    if (!costmap_->getRobotPose(req.start))
+    {
+        ROS_ERROR_NAMED("GPI", "Could not get global robot pose. We can't generate a plan, sorry.");
+        return;
+    }
+
     cb_base_navigation_msgs::PositionConstraint pc;
     pc.frame = global_frame_;
     std::stringstream str;
@@ -106,6 +113,12 @@ bool GlobalPlannerInterface::checkPlan(cb_base_navigation_msgs::CheckPlanRequest
 
 bool GlobalPlannerInterface::getPlan(cb_base_navigation_msgs::GetPlanRequest &req, cb_base_navigation_msgs::GetPlanResponse &resp)
 {
+    if (req.start.header.frame_id.empty())
+    {
+        ROS_ERROR_NAMED("GPI", "Start pose can't be empty");
+        return false;
+    }
+
     // Lock the costmap for a sec
     boost::unique_lock< costmap_2d::Costmap2D::mutex_t > lock(*(costmap_->getCostmap()->getMutex()));
 
@@ -113,18 +126,11 @@ bool GlobalPlannerInterface::getPlan(cb_base_navigation_msgs::GetPlanRequest &re
     if(req.goal_position_constraints.size() > 1) { ROS_ERROR_NAMED("GPI", "You have specified more than 1 constraint, this is not yet supported."); return false; }
     if(req.goal_position_constraints.size() == 0) { ROS_ERROR_NAMED("GPI", "No goal position constraint specified, planner cannot create plan."); return false; }
 
-    // Get if the robot pose is available
-    if (!costmap_->getRobotPose(global_pose_))
-    {
-        ROS_ERROR("Could not get global robot pose. We can't generate a plan, sorry.");
-        return false;
-    }
-
     // Container for goal positions in map frame
     std::vector<tf2::Vector3> goal_positions;
 
     // Plan the global path
-    if(global_planner_->makePlan(global_pose_, req.goal_position_constraints[0], resp.plan, goal_positions)) {
+    if(global_planner_->makePlan(req.start, req.goal_position_constraints[0], resp.plan, goal_positions)) {
         // Visualize me something
         vis_.publishGlobalPlanMarker(resp.plan);
         vis_.publishGlobalPlanMarkerArray(resp.plan);

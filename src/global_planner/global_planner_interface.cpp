@@ -62,7 +62,7 @@ void GlobalPlannerInterface::poseCallback(const geometry_msgs::PoseStampedConstP
     cb_base_navigation_msgs::GetPlanResponse resp;
 
     cb_base_navigation_msgs::PositionConstraint pc;
-    pc.frame = "map";
+    pc.frame = global_frame_;
     std::stringstream str;
     str << "(x-" << pose->pose.position.x << ")^2 + (y-" << pose->pose.position.y << ")^2 < .05^2";
     pc.constraint = str.str();
@@ -71,7 +71,7 @@ void GlobalPlannerInterface::poseCallback(const geometry_msgs::PoseStampedConstP
     if (getPlan(req,resp)) {
         if(resp.succes) {
             cb_base_navigation_msgs::OrientationConstraint oc;
-            oc.frame = "map";
+            oc.frame = global_frame_;
             tf2::Quaternion quat_tf;
             tf2::fromMsg(pose->pose.orientation, quat_tf);
             oc.look_at.x = pose->pose.position.x + cos(tf2::getYaw(quat_tf));

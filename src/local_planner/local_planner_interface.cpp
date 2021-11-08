@@ -225,7 +225,9 @@ void LocalPlannerInterface::doSomeMotionPlanning()
 {
     boost::unique_lock<boost::mutex> lock(goal_mtx_);
 
-    if (!isGoalSet() || !costmap_->getRobotPose(global_pose_)) return;
+    geometry_msgs::PoseStamped global_pose;
+
+    if (!isGoalSet() || !costmap_->getRobotPose(global_pose)) return;
 
     // 1) Update the end goal orientation due to the orientation constraint, if updated, set new plan
     if (updateEndGoalOrientation())
@@ -248,12 +250,12 @@ void LocalPlannerInterface::doSomeMotionPlanning()
 
     // 4) Get the pruned plan
     std::vector<geometry_msgs::PoseStamped> pruned_plan = goal_.plan;
-    prunePlan(global_pose_, pruned_plan);
+    prunePlan(global_pose, pruned_plan);
 
     // 4) Publish some feedback to via the action_server
     feedback_.dtg = getDistance(pruned_plan);
     if (feedback_.dtg < 1)
-        feedback_.dtg = base_local_planner::getGoalPositionDistance(global_pose_, pruned_plan.end()->pose.position.x, pruned_plan.end()->pose.position.y);
+        feedback_.dtg = base_local_planner::getGoalPositionDistance(global_pose, pruned_plan.end()->pose.position.x, pruned_plan.end()->pose.position.y);
     if (feedback_.blocked)
         feedback_.blocked = getBlockedPoint(pruned_plan, costmap_->getCostmap(), feedback_.point_blocked);
     action_server_->publishFeedback(feedback_);

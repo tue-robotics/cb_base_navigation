@@ -83,7 +83,6 @@ private:
     //! Frame names + Tranforms
     std::string robot_base_frame_, global_frame_;
     tf2_ros::Buffer* tf_;
-    geometry_msgs::PoseStamped global_pose_;
 
     //! Costmaps
     costmap_2d::Costmap2DROS* costmap_;

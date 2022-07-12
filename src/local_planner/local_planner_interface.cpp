@@ -275,6 +275,7 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
     {
         ed_msgs::SimpleQuery ed_query;
         ed_query.request.id = goal_.orientation_constraint.frame;
+        ed_query.request.radius = 1e9;
 
         if (!ed_client_.call(ed_query))
         {

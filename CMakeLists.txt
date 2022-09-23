@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(cb_base_navigation)
 
+add_compile_options(-Wall -Werror=all)
+add_compile_options(-Wextra -Werror=extra)
+
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   actionlib

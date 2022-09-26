@@ -41,6 +41,7 @@ add_compile_options(-Wall)
 # include_directories(include)
 include_directories(
   include
+  SYSTEM
   3rdparty
   ${catkin_INCLUDE_DIRS}
 )

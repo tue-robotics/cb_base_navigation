@@ -12,6 +12,8 @@
 #include <tue/profiling/profiler.h>
 #include <tue/profiling/scoped_timer.h>
 
+#include <limits>
+
 using namespace cb_base_navigation_msgs;
 
 namespace cb_local_planner {
@@ -275,7 +277,7 @@ bool LocalPlannerInterface::updateEndGoalOrientation()
     {
         ed_msgs::SimpleQuery ed_query;
         ed_query.request.id = goal_.orientation_constraint.frame;
-        ed_query.request.radius = 1e9;
+        ed_query.request.radius = std::numeric_limits<float>::infinity();;
 
         if (!ed_client_.call(ed_query))
         {

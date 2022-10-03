@@ -28,6 +28,8 @@
 
   <depend>ed_msgs</depend>
 
+  <test_depend>catkin_lint_cmake</test_depend>
+
   <doc_depend>doxygen</doc_depend>
 
   <export>

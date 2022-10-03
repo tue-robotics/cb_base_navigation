@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <class_libraries>
   <library path="lib/libglobal_planners">
     <class type="cb_global_planner::AStarPlannerGPP" base_class_type="cb_global_planner::GlobalPlannerPlugin">
@@ -5,4 +6,3 @@
     </class>
   </library>
 </class_libraries>
-

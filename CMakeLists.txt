@@ -50,8 +50,8 @@ add_library(global_planners ${GLOBAL_PLANNER_SRC_FILES})
 target_link_libraries(global_planners ${catkin_LIBRARIES})
 
 # get all the header files (for qtcreator)!
-file(GLOB_RECURSE LOCAL_HEADERS include/cb_base_navigation/local_planner/*.h)
-file(GLOB_RECURSE GLOBAL_HEADERS include/cb_base_navigation/global_planner/*.h)
+file(GLOB_RECURSE LOCAL_HEADERS include/${PROJECT_NAME}/local_planner/*.h)
+file(GLOB_RECURSE GLOBAL_HEADERS include/${PROJECT_NAME}/global_planner/*.h)
 
 # get all the src files !
 file(GLOB_RECURSE LOCAL_PLANNER_INTERFACE_SOURCES src/local_planner/*.cpp)

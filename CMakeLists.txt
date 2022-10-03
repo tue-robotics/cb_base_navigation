@@ -8,7 +8,7 @@ add_compile_options(-Wextra -Werror=extra)
 find_package(catkin REQUIRED COMPONENTS
   actionlib
   base_local_planner
-  cb_base_navigation_msgs
+  ${PROJECT_NAME}_msgs
   code_profiler
   costmap_2d
   ed_msgs
@@ -27,7 +27,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES global_planners
-  CATKIN_DEPENDS actionlib base_local_planner cb_base_navigation_msgs code_profiler costmap_2d ed_msgs geometry_msgs nav_core pluginlib roscpp tf2 tf2_ros visualization_msgs
+  CATKIN_DEPENDS actionlib base_local_planner ${PROJECT_NAME}_msgs code_profiler costmap_2d ed_msgs geometry_msgs nav_core pluginlib roscpp tf2 tf2_ros visualization_msgs
 )
 
 ###########

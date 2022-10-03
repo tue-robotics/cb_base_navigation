@@ -66,3 +66,32 @@ add_dependencies(local_planner_interface ${catkin_EXPORTED_TARGETS})
 add_executable(global_planner_interface src/global_planner.cpp ${GLOBAL_PLANNER_INTERFACE_SOURCES} ${GLOBAL_HEADERS})
 target_link_libraries(global_planner_interface ${catkin_LIBRARIES})
 add_dependencies(global_planner_interface ${catkin_EXPORTED_TARGETS})
+
+catkin_install_python(
+  PROGRAMS examples/move
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(
+  DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+install(
+  TARGETS global_planners
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
+
+install(
+  TARGETS
+    global_planner_interface
+    local_planner_interface
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(
+  FILES global_planner_plugins.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)

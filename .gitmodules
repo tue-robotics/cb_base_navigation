@@ -1,0 +1,3 @@
+[submodule "3rdparty/exprtk"]
+	path = 3rdparty/exprtk
+	url = https://github.com/tue-robotics/exprtk.git

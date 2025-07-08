@@ -26,7 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
 ###################################
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES global_planners
+  LIBRARIES constraint_evaluator local_planner_interface global_planner_interface global_planner_plugins
   CATKIN_DEPENDS actionlib base_local_planner ${PROJECT_NAME}_msgs code_profiler costmap_2d ed_msgs geometry_msgs nav_core pluginlib roscpp tf2 tf2_ros visualization_msgs
 )
 
@@ -45,27 +45,36 @@ include_directories(
 )
 
 # Declare libraries
-file(GLOB_RECURSE GLOBAL_PLANNER_SRC_FILES global_planner_plugins/*.cpp)
-add_library(global_planners ${GLOBAL_PLANNER_SRC_FILES})
-target_link_libraries(global_planners ${catkin_LIBRARIES})
+add_library(constraint_evaluator src/global_planner/constraint_evaluator.cpp)
+target_link_libraries(constraint_evaluator ${catkin_LIBRARIES})
 
-# get all the header files (for qtcreator)!
-file(GLOB_RECURSE LOCAL_HEADERS include/${PROJECT_NAME}/local_planner/*.h)
-file(GLOB_RECURSE GLOBAL_HEADERS include/${PROJECT_NAME}/global_planner/*.h)
-
-# get all the src files !
-file(GLOB_RECURSE LOCAL_PLANNER_INTERFACE_SOURCES src/local_planner/*.cpp)
-file(GLOB_RECURSE GLOBAL_PLANNER_INTERFACE_SOURCES src/global_planner/*.cpp)
-
-## Local planner node
-add_executable(local_planner_interface src/local_planner.cpp ${LOCAL_PLANNER_INTERFACE_SOURCES} ${LOCAL_HEADERS})
+add_library(local_planner_interface
+  src/local_planner/local_planner_interface.cpp
+  src/local_planner/visualization.cpp
+)
 target_link_libraries(local_planner_interface ${catkin_LIBRARIES})
 add_dependencies(local_planner_interface ${catkin_EXPORTED_TARGETS})
 
-## Global planner node
-add_executable(global_planner_interface src/global_planner.cpp ${GLOBAL_PLANNER_INTERFACE_SOURCES} ${GLOBAL_HEADERS})
+add_library(global_planner_interface
+  src/global_planner/global_planner_interface.cpp
+  src/global_planner/visualization.cpp
+)
 target_link_libraries(global_planner_interface ${catkin_LIBRARIES})
 add_dependencies(global_planner_interface ${catkin_EXPORTED_TARGETS})
+
+## Local planner node
+add_executable(local_planner src/local_planner.cpp )
+target_link_libraries(local_planner local_planner_interface ${catkin_LIBRARIES})
+
+## Global planner node
+add_executable(global_planner src/global_planner.cpp)
+target_link_libraries(global_planner global_planner_interface ${catkin_LIBRARIES})
+
+## Global planner plugins
+file(GLOB_RECURSE GLOBAL_PLANNER_SRC_FILES global_planner_plugins/*.cpp)
+add_library(global_planner_plugins ${GLOBAL_PLANNER_SRC_FILES})
+target_link_libraries(global_planner_plugins constraint_evaluator global_planner_interface ${catkin_LIBRARIES})
+add_dependencies(global_planner_plugins ${catkin_EXPORTED_TARGETS})
 
 catkin_install_python(
   PROGRAMS examples/move
@@ -78,7 +87,7 @@ install(
 )
 
 install(
-  TARGETS global_planners
+  TARGETS constraint_evaluator global_planner_interface global_planner_plugins local_planner_interface
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
@@ -86,8 +95,8 @@ install(
 
 install(
   TARGETS
-    global_planner_interface
-    local_planner_interface
+    global_planner
+    local_planner
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

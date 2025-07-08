@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <class_libraries>
-  <library path="lib/libglobal_planners">
+  <library path="lib/libglobal_planner_plugins">
     <class type="cb_global_planner::AStarPlannerGPP" base_class_type="cb_global_planner::GlobalPlannerPlugin">
       <description>A* algorithm that can work with the costmap 2d interface of ROS + PositionConstraints.</description>
     </class>
